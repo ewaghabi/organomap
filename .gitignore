@@ -1,0 +1,4 @@
+.DS_Store
+.gemini/
+node_modules/
+dist/
