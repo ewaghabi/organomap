@@ -734,22 +734,26 @@
             }
 
             function resetViewPosition() {
-                // Center horizontal
                 const rootNode = nodes.find(n => !n.parentId) || nodes[0];
-                let offsetCenter = 0;
-                if (rootNode) {
-                    const el = document.getElementById(rootNode.id);
-                    if (el) {
-                        offsetCenter = el.offsetWidth / 2;
-                    } else {
-                        offsetCenter = 60; // Approximate half width
-                    }
-                }
+                if (!rootNode) return;
 
-                const sidebarWidth = 60; // From CSS
-                viewState.x = (window.innerWidth / 2) - sidebarWidth - offsetCenter;
-                viewState.y = 120; // Lowered to clear the header
+                const el = document.getElementById(rootNode.id);
+                const nodeWidth = el ? el.offsetWidth : 180;
+                const nodeHeight = el ? el.offsetHeight : 80;
+
+                const sidebarWidth = 60;
+                const headerHeight = 60;
+
+                // Target absolute horizontal center (window center) relative to canvas container
+                const centerX = (window.innerWidth / 2) - sidebarWidth;
+
+                // We want the node's top to be some distance below the header
+                const targetY = headerHeight + 50;
+
                 viewState.scale = 1;
+                viewState.x = centerX - (rootNode.x + nodeWidth / 2);
+                viewState.y = targetY - rootNode.y;
+
                 updateWorldTransform();
             }
 
