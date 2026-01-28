@@ -29,7 +29,44 @@
             background-color: var(--bg-color);
             height: 100vh;
             width: 100vw;
+        }
+
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        #project-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #334155;
+            outline: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            cursor: text;
+        }
+
+        #project-title:hover,
+        #project-title:focus {
+            background-color: #f1f5f9;
+        }
+
+        #app-body {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
 
         /* Sidebar Styles */
@@ -40,12 +77,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 10px 0;
+            padding: 70px 0 10px 0;
+            /* Padding for header */
             gap: 10px;
             z-index: 2000;
-            /* Increased to stay above canvas */
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-            /* Removed overflow-y: auto to prevent clipping of absolute children */
         }
 
         .tool-btn {
@@ -463,344 +499,351 @@
 
 <body>
 
-    <div id="sidebar">
-        <!-- Style Tools Group -->
-        <div class="color-picker-wrapper tool-btn" data-tooltip="Cor de fundo (Background Color)">
-            <div class="color-preview" id="bg-preview" style="background-color: #ffffff;">
-                <!-- Icon: Paint Bucket / Fill -->
+    <div id="header">
+        <div id="project-title" contenteditable="true">Organograma sem título</div>
+    </div>
+
+    <div id="app-body">
+        <div id="sidebar">
+            <!-- Style Tools Group -->
+            <div class="color-picker-wrapper tool-btn" data-tooltip="Cor de fundo (Background Color)">
+                <div class="color-preview" id="bg-preview" style="background-color: #ffffff;">
+                    <!-- Icon: Paint Bucket / Fill -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
+                        <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- outer box -->
+                            <rect x="4.5" y="4.5" width="21" height="21" rx="3.5" />
+
+                            <!-- diagonal split (shifted down/left to clear the dot) -->
+                            <path d="M5 24 L24 15 V25 Z" fill="currentColor" opacity="0.58" />
+
+                            <!-- color swatch dot -->
+                            <circle cx="21.2" cy="8.8" r="2.2" fill="currentColor" stroke="none" />
+                        </g>
+                    </svg>
+                </div>
+                <input type="color" id="bg-color-picker" class="color-input" value="#ffffff">
+            </div>
+
+            <div class="color-picker-wrapper tool-btn" data-tooltip="Cor da borda (Border Color)">
+                <div class="color-preview" id="border-preview" style="border: 2px solid #ccc;">
+                    <!-- Icon: Square frame -->
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" stroke="black" stroke-width="2" />
+                    </svg>
+                </div>
+                <input type="color" id="border-color-picker" class="color-input" value="#cccccc">
+            </div>
+
+            <div class="tool-btn" id="border-width-btn" data-tooltip="Espessura da borda (Border Width)">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 12h18" stroke="black" stroke-width="4" stroke-linecap="round" />
+                </svg>
+                <div id="border-width-popover" class="slider-popover">
+                    <input type="range" id="border-width-slider" min="0" max="10" value="2">
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Font Tools Group -->
+            <div class="color-picker-wrapper tool-btn" data-tooltip="Cor da fonte (Text Color)">
+                <div class="color-preview" id="text-color-preview">
+                    <!-- Icon: A with red underline -->
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 17l5-13 5 13M9 12h6" stroke="black" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M4 21h16" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <input type="color" id="text-color-picker" class="color-input" value="#000000">
+            </div>
+
+            <div class="tool-btn" id="font-size-btn" data-tooltip="Tamanho da fonte (Font Size)">
+                <!-- Icon: Small A next to Big A -->
+                <svg viewBox="0 0 24 24">
+                    <text x="4" y="18" font-size="8">A</text>
+                    <text x="12" y="18" font-size="16">A</text>
+                </svg>
+                <div id="font-size-popover" class="slider-popover">
+                    <input type="range" id="font-size-slider" min="10" max="40" value="16">
+                </div>
+            </div>
+
+            <div class="tool-btn" id="format-painter-btn" data-tooltip="Copiar Estilo (Format Painter)">
+                <!-- Icon: Paint Roller (Handle + Cylinder) -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
                     <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <!-- outer box -->
-                        <rect x="4.5" y="4.5" width="21" height="21" rx="3.5" />
-
-                        <!-- diagonal split (shifted down/left to clear the dot) -->
-                        <path d="M5 24 L24 15 V25 Z" fill="currentColor" opacity="0.58" />
-
-                        <!-- color swatch dot -->
-                        <circle cx="21.2" cy="8.8" r="2.2" fill="currentColor" stroke="none" />
+                        <!-- roller -->
+                        <path d="M6 4.8h14.2a2 2 0 0 1 2 2V9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.8a2 2 0 0 1 2-2Z" />
+                        <!-- bracket -->
+                        <path d="M22.2 6.2h2.2v3.4h-2.2" />
+                        <!-- arm -->
+                        <path d="M24.4 9.6v2.4l-6.8 3.6v2.2" />
+                        <!-- handle -->
+                        <path
+                            d="M14.2 17.8a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6v7.2a1.6 1.6 0 0 1-1.6 1.6h-2.4a1.6 1.6 0 0 1-1.6-1.6Z" />
+                        <!-- inner inset -->
+                        <path d="M16.0 18.9h2.0v5.0h-2.0Z" />
                     </g>
                 </svg>
             </div>
-            <input type="color" id="bg-color-picker" class="color-input" value="#ffffff">
-        </div>
 
-        <div class="color-picker-wrapper tool-btn" data-tooltip="Cor da borda (Border Color)">
-            <div class="color-preview" id="border-preview" style="border: 2px solid #ccc;">
-                <!-- Icon: Square frame -->
-                <svg viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" stroke="black" stroke-width="2" />
-                </svg>
-            </div>
-            <input type="color" id="border-color-picker" class="color-input" value="#cccccc">
-        </div>
+            <div class="divider"></div>
 
-        <div class="tool-btn" id="border-width-btn" data-tooltip="Espessura da borda (Border Width)">
-            <svg viewBox="0 0 24 24">
-                <path d="M3 12h18" stroke="black" stroke-width="4" stroke-linecap="round" />
-            </svg>
-            <div id="border-width-popover" class="slider-popover">
-                <input type="range" id="border-width-slider" min="0" max="10" value="2">
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- Font Tools Group -->
-        <div class="color-picker-wrapper tool-btn" data-tooltip="Cor da fonte (Text Color)">
-            <div class="color-preview" id="text-color-preview">
-                <!-- Icon: A with red underline -->
-                <svg viewBox="0 0 24 24">
-                    <path d="M7 17l5-13 5 13M9 12h6" stroke="black" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" />
-                    <path d="M4 21h16" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
-                </svg>
-            </div>
-            <input type="color" id="text-color-picker" class="color-input" value="#000000">
-        </div>
-
-        <div class="tool-btn" id="font-size-btn" data-tooltip="Tamanho da fonte (Font Size)">
-            <!-- Icon: Small A next to Big A -->
-            <svg viewBox="0 0 24 24">
-                <text x="4" y="18" font-size="8">A</text>
-                <text x="12" y="18" font-size="16">A</text>
-            </svg>
-            <div id="font-size-popover" class="slider-popover">
-                <input type="range" id="font-size-slider" min="10" max="40" value="16">
-            </div>
-        </div>
-
-        <div class="tool-btn" id="format-painter-btn" data-tooltip="Copiar Estilo (Format Painter)">
-            <!-- Icon: Paint Roller (Handle + Cylinder) -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
-                <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- roller -->
-                    <path d="M6 4.8h14.2a2 2 0 0 1 2 2V9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.8a2 2 0 0 1 2-2Z" />
-                    <!-- bracket -->
-                    <path d="M22.2 6.2h2.2v3.4h-2.2" />
-                    <!-- arm -->
-                    <path d="M24.4 9.6v2.4l-6.8 3.6v2.2" />
-                    <!-- handle -->
+            <!-- Action Tools -->
+            <div class="tool-btn" id="delete-btn" data-tooltip="Excluir item (Delete)">
+                <svg viewBox="0 0 24 24" stroke="var(--delete-color)">
                     <path
-                        d="M14.2 17.8a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6v7.2a1.6 1.6 0 0 1-1.6 1.6h-2.4a1.6 1.6 0 0 1-1.6-1.6Z" />
-                    <!-- inner inset -->
-                    <path d="M16.0 18.9h2.0v5.0h-2.0Z" />
-                </g>
-            </svg>
+                        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+                </svg>
+            </div>
+
+            <div class="tool-btn" id="reset-view-btn" data-tooltip="Resetar Vista (Reset View)">
+                <!-- Icon: Arrows pointing to center/corners -->
+                <svg viewBox="0 0 24 24" stroke="black">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="tool-btn" id="export-btn" data-tooltip="Exportar JSON (Copy/Export)">
+                <!-- Icon: Clipboard with arrow UP/OUT -->
+                <svg viewBox="0 0 24 24" stroke="black">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    <path d="M12 11h4" />
+                    <path d="M12 14h4" />
+                    <path d="M8 11h1" />
+                    <path d="M8 14h1" />
+                </svg>
+            </div>
+
+            <div class="tool-btn" id="import-btn" data-tooltip="Importar JSON (Paste/Import)">
+                <!-- Icon: Clipboard with arrow IN -->
+                <svg viewBox="0 0 24 24" stroke="black">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    <path d="M12 12v6" />
+                    <path d="M9 15l3 3 3-3" />
+                </svg>
+            </div>
+
         </div>
 
-        <div class="divider"></div>
-
-        <!-- Action Tools -->
-        <div class="tool-btn" id="delete-btn" data-tooltip="Excluir item (Delete)">
-            <svg viewBox="0 0 24 24" stroke="var(--delete-color)">
-                <path
-                    d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
-            </svg>
-        </div>
-
-        <div class="tool-btn" id="reset-view-btn" data-tooltip="Resetar Vista (Reset View)">
-            <!-- Icon: Arrows pointing to center/corners -->
-            <svg viewBox="0 0 24 24" stroke="black">
-                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-            </svg>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="tool-btn" id="export-btn" data-tooltip="Exportar JSON (Copy/Export)">
-            <!-- Icon: Clipboard with arrow UP/OUT -->
-            <svg viewBox="0 0 24 24" stroke="black">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                <path d="M12 11h4" />
-                <path d="M12 14h4" />
-                <path d="M8 11h1" />
-                <path d="M8 14h1" />
-            </svg>
-        </div>
-
-        <div class="tool-btn" id="import-btn" data-tooltip="Importar JSON (Paste/Import)">
-            <!-- Icon: Clipboard with arrow IN -->
-            <svg viewBox="0 0 24 24" stroke="black">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                <path d="M12 12v6" />
-                <path d="M9 15l3 3 3-3" />
-            </svg>
-        </div>
-
-    </div>
-
-    <div id="canvas-container">
-        <div id="world">
-            <div id="grid-pattern"></div>
-            <svg id="connections-layer"></svg>
-            <div id="nodes-layer"></div>
-        </div>
-        <div id="zoom-controls">
-            <button class="zoom-btn" onclick="zoom(0.1)">+</button>
-            <button class="zoom-btn" onclick="resetZoom()">100%</button>
-            <button class="zoom-btn" onclick="zoom(-0.1)">-</button>
-        </div>
-    </div>
-
-    <!-- Modals Overlay -->
-    <div id="modal-overlay">
-
-        <!-- Import Modal -->
-        <div id="import-modal" class="modal">
-            <h3 style="margin: 0;">Importar JSON</h3>
-            <p style="margin: 0; color: #666; font-size: 14px;">Cole o JSON abaixo. O conteúdo atual será substituído.
-            </p>
-            <textarea id="import-textarea" placeholder='[{"id": "node-1", ...}]'></textarea>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
-                <button class="btn btn-primary" id="btn-confirm-import" disabled>Importar</button>
+        <div id="canvas-container">
+            <div id="world">
+                <div id="grid-pattern"></div>
+                <svg id="connections-layer"></svg>
+                <div id="nodes-layer"></div>
+            </div>
+            <div id="zoom-controls">
+                <button class="zoom-btn" onclick="zoom(0.1)">+</button>
+                <button class="zoom-btn" onclick="resetZoom()">100%</button>
+                <button class="zoom-btn" onclick="zoom(-0.1)">-</button>
             </div>
         </div>
 
-        <!-- Generic Confirm Modal -->
-        <div id="confirm-modal" class="modal">
-            <h3 style="margin: 0;" id="confirm-title">Confirmação</h3>
-            <p style="margin: 0; color: #666; font-size: 14px;" id="confirm-message">Are you sure?</p>
-            <div class="modal-buttons">
-                <button class="btn btn-cancel" onclick="closeModal()">Não</button>
-                <button class="btn btn-primary" id="btn-confirm-yes">Sim</button>
+        <!-- Modals Overlay -->
+        <div id="modal-overlay">
+
+            <!-- Import Modal -->
+            <div id="import-modal" class="modal">
+                <h3 style="margin: 0;">Importar JSON</h3>
+                <p style="margin: 0; color: #666; font-size: 14px;">Cole o JSON abaixo. O conteúdo atual será
+                    substituído.
+                </p>
+                <textarea id="import-textarea" placeholder='[{"id": "node-1", ...}]'></textarea>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button class="btn btn-primary" id="btn-confirm-import" disabled>Importar</button>
+                </div>
             </div>
+
+            <!-- Generic Confirm Modal -->
+            <div id="confirm-modal" class="modal">
+                <h3 style="margin: 0;" id="confirm-title">Confirmação</h3>
+                <p style="margin: 0; color: #666; font-size: 14px;" id="confirm-message">Are you sure?</p>
+                <div class="modal-buttons">
+                    <button class="btn btn-cancel" onclick="closeModal()">Não</button>
+                    <button class="btn btn-primary" id="btn-confirm-yes">Sim</button>
+                </div>
+            </div>
+
+            <!-- Generic Alert Modal -->
+            <div id="alert-modal" class="modal">
+                <h3 style="margin: 0;" id="alert-title">Aviso</h3>
+                <p style="margin: 0; color: #666; font-size: 14px;" id="alert-message">Info</p>
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" onclick="closeModal()">OK</button>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Generic Alert Modal -->
-        <div id="alert-modal" class="modal">
-            <h3 style="margin: 0;" id="alert-title">Aviso</h3>
-            <p style="margin: 0; color: #666; font-size: 14px;" id="alert-message">Info</p>
-            <div class="modal-buttons">
-                <button class="btn btn-primary" onclick="closeModal()">OK</button>
-            </div>
-        </div>
+        <script>
+            const canvasContainer = document.getElementById('canvas-container');
+            const world = document.getElementById('world');
+            const nodesLayer = document.getElementById('nodes-layer');
+            const connectionsLayer = document.getElementById('connections-layer');
+            const modalOverlay = document.getElementById('modal-overlay');
 
-    </div>
+            // State variables
+            let projectTitle = "Organograma sem título";
+            let nodes = [];
+            let selectedNodeId = null;
+            let isNodeDragging = false;
+            let isResizing = false;
+            let isPanning = false;
+            let dragOffset = { x: 0, y: 0 };
+            let resizeStart = { x: 0, y: 0, w: 0, h: 0 };
+            let resizeType = ''; // 'r', 'b', 'rb'
+            let panStart = { x: 0, y: 0 };
+            let draggedNodeId = null;
+            let resizingNodeId = null;
+            let viewState = { x: 0, y: 0, scale: 1 };
 
-    <script>
-        const canvasContainer = document.getElementById('canvas-container');
-        const world = document.getElementById('world');
-        const nodesLayer = document.getElementById('nodes-layer');
-        const connectionsLayer = document.getElementById('connections-layer');
-        const modalOverlay = document.getElementById('modal-overlay');
+            // Format Painter State
+            let formatPainterMode = 'IDLE'; // IDLE, SINGLE, CONTINUOUS
+            let formatSourceStyle = null;
 
-        // State variables
-        let nodes = [];
-        let selectedNodeId = null;
-        let isNodeDragging = false;
-        let isResizing = false;
-        let isPanning = false;
-        let dragOffset = { x: 0, y: 0 };
-        let resizeStart = { x: 0, y: 0, w: 0, h: 0 };
-        let resizeType = ''; // 'r', 'b', 'rb'
-        let panStart = { x: 0, y: 0 };
-        let draggedNodeId = null;
-        let resizingNodeId = null;
-        let viewState = { x: 0, y: 0, scale: 1 };
-
-        // Format Painter State
-        let formatPainterMode = 'IDLE'; // IDLE, SINGLE, CONTINUOUS
-        let formatSourceStyle = null;
-
-        // Persistent Style (Last used style)
-        let currentStyle = {
-            backgroundColor: '#ffffff',
-            borderColor: '#cccccc',
-            borderWidth: 2,
-            fontSize: 16,
-            color: '#000000'
-        };
-
-        const DEFAULT_TEXT = "<texto>";
-        const CHILD_OFFSET_Y = 150;
-        const CHILD_SPACING_X = 160;
-
-        // --- Core ---
-
-        function init() {
-            // Set initial view
-            resetViewPosition();
-
-            // Initial Node
-            createNode({ x: 0, y: 0, text: DEFAULT_TEXT, isRoot: true });
-            render();
-            setupEventListeners();
-        }
-
-        function resetViewPosition() {
-            // Center horizontal
-            const rootNode = nodes.find(n => !n.parentId) || nodes[0];
-            let offsetCenter = 0;
-            if (rootNode) {
-                const el = document.getElementById(rootNode.id);
-                if (el) {
-                    offsetCenter = el.offsetWidth / 2;
-                } else {
-                    offsetCenter = 60; // Approximate half width
-                }
-            }
-
-            const sidebarWidth = 60; // From CSS
-            viewState.x = (window.innerWidth / 2) - sidebarWidth - offsetCenter;
-            viewState.y = 50; // Top
-            viewState.scale = 1;
-            updateWorldTransform();
-        }
-
-        function createNode({ x, y, text = DEFAULT_TEXT, parentId = null, isRoot = false, id = null, style = null }) {
-            const nodeId = id || 'node-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-
-            // Use provided style or clone current persistent style
-            const nodeStyle = style ? { ...style } : { ...currentStyle };
-
-            const newNode = {
-                id: nodeId,
-                x,
-                y,
-                width: 180,
-                height: 80,
-                text,
-                parentId,
-                style: nodeStyle
+            // Persistent Style (Last used style)
+            let currentStyle = {
+                backgroundColor: '#ffffff',
+                borderColor: '#cccccc',
+                borderWidth: 2,
+                fontSize: 16,
+                color: '#000000'
             };
-            nodes.push(newNode);
-            render();
-            if (!id) selectNode(nodeId);
-            return nodeId;
-        }
 
-        function deleteNode(id) {
-            showConfirm("Excluir Item", "Tem certeza que deseja excluir este item e seus filhos?", () => {
-                const toDelete = [id];
-                let i = 0;
-                while (i < toDelete.length) {
-                    const currentId = toDelete[i];
-                    const children = nodes.filter(n => n.parentId === currentId);
-                    children.forEach(c => toDelete.push(c.id));
-                    i++;
-                }
+            const DEFAULT_TEXT = "<texto>";
+            const CHILD_OFFSET_Y = 150;
+            const CHILD_SPACING_X = 160;
 
-                nodes = nodes.filter(n => !toDelete.includes(n.id));
-                selectedNodeId = null;
+            // --- Core ---
+
+            function init() {
+                // Set initial view
+                resetViewPosition();
+
+                // Initial Node
+                createNode({ x: 0, y: 0, text: DEFAULT_TEXT, isRoot: true });
                 render();
-                updateToolbarFromSelection();
-            });
-        }
+                setupEventListeners();
+            }
 
-        function updateNodeStyle(id, styleUpdate) {
-            const node = nodes.find(n => n.id === id);
-            if (node) {
-                node.style = { ...node.style, ...styleUpdate };
-                // Update persistent style when user actively changes something
-                currentStyle = { ...currentStyle, ...styleUpdate };
+            function resetViewPosition() {
+                // Center horizontal
+                const rootNode = nodes.find(n => !n.parentId) || nodes[0];
+                let offsetCenter = 0;
+                if (rootNode) {
+                    const el = document.getElementById(rootNode.id);
+                    if (el) {
+                        offsetCenter = el.offsetWidth / 2;
+                    } else {
+                        offsetCenter = 60; // Approximate half width
+                    }
+                }
+
+                const sidebarWidth = 60; // From CSS
+                viewState.x = (window.innerWidth / 2) - sidebarWidth - offsetCenter;
+                viewState.y = 120; // Lowered to clear the header
+                viewState.scale = 1;
+                updateWorldTransform();
+            }
+
+            function createNode({ x, y, text = DEFAULT_TEXT, parentId = null, isRoot = false, id = null, style = null }) {
+                const nodeId = id || 'node-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+
+                // Use provided style or clone current persistent style
+                const nodeStyle = style ? { ...style } : { ...currentStyle };
+
+                const newNode = {
+                    id: nodeId,
+                    x,
+                    y,
+                    width: 180,
+                    height: 80,
+                    text,
+                    parentId,
+                    style: nodeStyle
+                };
+                nodes.push(newNode);
                 render();
+                if (!id) selectNode(nodeId);
+                return nodeId;
             }
-        }
 
-        function updateNodeText(id, newText) {
-            const node = nodes.find(n => n.id === id);
-            if (node) {
-                node.text = newText;
+            function deleteNode(id) {
+                showConfirm("Excluir Item", "Tem certeza que deseja excluir este item e seus filhos?", () => {
+                    const toDelete = [id];
+                    let i = 0;
+                    while (i < toDelete.length) {
+                        const currentId = toDelete[i];
+                        const children = nodes.filter(n => n.parentId === currentId);
+                        children.forEach(c => toDelete.push(c.id));
+                        i++;
+                    }
+
+                    nodes = nodes.filter(n => !toDelete.includes(n.id));
+                    selectedNodeId = null;
+                    render();
+                    updateToolbarFromSelection();
+                });
             }
-        }
 
-        function updateNodePosition(id, x, y) {
-            const node = nodes.find(n => n.id === id);
-            if (node) {
-                node.x = x;
-                node.y = y;
-                const el = document.getElementById(id);
-                if (el) {
-                    el.style.left = x + 'px';
-                    el.style.top = y + 'px';
+            function updateNodeStyle(id, styleUpdate) {
+                const node = nodes.find(n => n.id === id);
+                if (node) {
+                    node.style = { ...node.style, ...styleUpdate };
+                    // Update persistent style when user actively changes something
+                    currentStyle = { ...currentStyle, ...styleUpdate };
+                    render();
                 }
-                updateConnections();
             }
-        }
 
-        // --- View & Render ---
-
-        function render() {
-            // Sync DOM
-            const existingIds = Array.from(nodesLayer.children).map(el => el.id);
-            const currentIds = nodes.map(n => n.id);
-
-            existingIds.forEach(id => {
-                if (!currentIds.includes(id)) {
-                    document.getElementById(id).remove();
+            function updateNodeText(id, newText) {
+                const node = nodes.find(n => n.id === id);
+                if (node) {
+                    node.text = newText;
                 }
-            });
+            }
 
-            nodes.forEach(node => {
-                let el = document.getElementById(node.id);
-                if (!el) {
-                    el = document.createElement('div');
-                    el.id = node.id;
-                    el.className = 'node';
-                    el.innerHTML = `
+            function updateNodePosition(id, x, y) {
+                const node = nodes.find(n => n.id === id);
+                if (node) {
+                    node.x = x;
+                    node.y = y;
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.style.left = x + 'px';
+                        el.style.top = y + 'px';
+                    }
+                    updateConnections();
+                }
+            }
+
+            // --- View & Render ---
+
+            function render() {
+                // Sync DOM
+                const existingIds = Array.from(nodesLayer.children).map(el => el.id);
+                const currentIds = nodes.map(n => n.id);
+
+                existingIds.forEach(id => {
+                    if (!currentIds.includes(id)) {
+                        document.getElementById(id).remove();
+                    }
+                });
+
+                nodes.forEach(node => {
+                    let el = document.getElementById(node.id);
+                    if (!el) {
+                        el = document.createElement('div');
+                        el.id = node.id;
+                        el.className = 'node';
+                        el.innerHTML = `
                         <div class="node-content" contenteditable="false"></div>
                         <div class="add-child-btn" title="Adicionar filho">+</div>
                         <div class="resizer resizer-r" data-type="r"></div>
@@ -808,553 +851,573 @@
                         <div class="resizer resizer-rb" data-type="rb"></div>
                     `;
 
+                        const contentEl = el.querySelector('.node-content');
+
+                        // Interaction
+                        el.addEventListener('dblclick', (e) => {
+                            e.stopPropagation();
+                            contentEl.contentEditable = true;
+                            el.classList.add('editing');
+                            contentEl.focus();
+                            document.execCommand('selectAll', false, null);
+                        });
+
+                        contentEl.addEventListener('blur', (e) => {
+                            contentEl.contentEditable = false;
+                            el.classList.remove('editing');
+                            updateNodeText(node.id, contentEl.innerText);
+                            requestAnimationFrame(updateConnections);
+                        });
+
+                        el.addEventListener('mousedown', (e) => {
+                            if (el.classList.contains('editing')) return;
+                            e.stopPropagation();
+
+                            // Handle Format Painter Click
+                            if (formatPainterMode !== 'IDLE') {
+                                handleFormatPainterApply(node);
+                                return;
+                            }
+
+                            selectNode(node.id);
+                            startNodeDrag(e, node);
+                        });
+
+                        // Add button
+                        const addBtn = el.querySelector('.add-child-btn');
+                        addBtn.addEventListener('mousedown', (e) => {
+                            e.stopPropagation();
+                            addChildTo(node.id);
+                        });
+
+                        // Resize Listeners
+                        el.querySelectorAll('.resizer').forEach(resizer => {
+                            resizer.addEventListener('mousedown', (e) => {
+                                e.stopPropagation();
+                                startNodeResize(e, node, resizer.dataset.type);
+                            });
+                        });
+
+                        nodesLayer.appendChild(el);
+                    }
+
+                    // Style Application
+                    el.style.left = node.x + 'px';
+                    el.style.top = node.y + 'px';
+                    el.style.width = node.width + 'px';
+                    el.style.height = node.height + 'px';
+                    el.style.backgroundColor = node.style.backgroundColor;
+                    el.style.borderColor = node.style.borderColor;
+                    el.style.borderWidth = node.style.borderWidth + 'px';
+                    el.style.fontSize = node.style.fontSize + 'px';
+
                     const contentEl = el.querySelector('.node-content');
+                    if (document.activeElement !== contentEl && contentEl.innerText !== node.text) {
+                        contentEl.innerText = node.text;
+                    }
+                    contentEl.style.color = node.style.color;
 
-                    // Interaction
-                    el.addEventListener('dblclick', (e) => {
-                        e.stopPropagation();
-                        contentEl.contentEditable = true;
-                        el.classList.add('editing');
-                        contentEl.focus();
-                        document.execCommand('selectAll', false, null);
-                    });
+                    if (node.id === selectedNodeId) {
+                        el.classList.add('selected');
+                    } else {
+                        el.classList.remove('selected');
+                    }
+                });
 
-                    contentEl.addEventListener('blur', (e) => {
-                        contentEl.contentEditable = false;
-                        el.classList.remove('editing');
-                        updateNodeText(node.id, contentEl.innerText);
-                        requestAnimationFrame(updateConnections);
-                    });
+                updateConnections();
+            }
 
-                    el.addEventListener('mousedown', (e) => {
-                        if (el.classList.contains('editing')) return;
-                        e.stopPropagation();
+            function updateConnections() {
+                connectionsLayer.innerHTML = '';
 
-                        // Handle Format Painter Click
-                        if (formatPainterMode !== 'IDLE') {
-                            handleFormatPainterApply(node);
-                            return;
+                nodes.forEach(node => {
+                    if (node.parentId) {
+                        const parent = nodes.find(n => n.id === node.parentId);
+                        if (parent) {
+                            drawLine(parent, node);
+                        }
+                    }
+                });
+            }
+
+            function drawLine(startNode, endNode) {
+                const startEl = document.getElementById(startNode.id);
+                const endEl = document.getElementById(endNode.id);
+                if (!startEl || !endEl) return;
+
+                const startW = startEl.offsetWidth;
+                const startH = startEl.offsetHeight;
+                const endW = endEl.offsetWidth;
+                const endH = endEl.offsetHeight;
+
+                const x1 = startNode.x + startW / 2;
+                const y1 = startNode.y + startH / 2;
+                const x2 = endNode.x + endW / 2;
+                const y2 = endNode.y + endH / 2;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('class', 'connection-line');
+
+                const d = `M ${x1} ${y1} C ${x1} ${y1 + 50}, ${x2} ${y2 - 50}, ${x2} ${y2}`;
+                path.setAttribute('d', d);
+                connectionsLayer.appendChild(path);
+            }
+
+            function updateWorldTransform() {
+                world.style.transform = `translate(${viewState.x}px, ${viewState.y}px) scale(${viewState.scale})`;
+            }
+
+            // --- Interaction Logic ---
+
+            function zoom(delta) {
+                viewState.scale += delta;
+                if (viewState.scale < 0.1) viewState.scale = 0.1;
+                updateWorldTransform();
+            }
+
+            function resetZoom() {
+                viewState.scale = 1;
+                updateWorldTransform();
+            }
+
+            function selectNode(id) {
+                selectedNodeId = id;
+                nodes.forEach(n => {
+                    const el = document.getElementById(n.id);
+                    if (el) {
+                        if (n.id === id) el.classList.add('selected');
+                        else el.classList.remove('selected');
+                    }
+                });
+                updateToolbarFromSelection();
+
+                // If selecting a node, we might want to update currentStyle to match selection
+                // so next created node matches this one? User requirement says:
+                // "Faça a última configuração de estilo (borda, fonte, etc) persistir para o próximo nó criado"
+                // Usually this means if I change a setting. Does selecting change the "pen"?
+                // Let's assume selection sets current style context.
+                const node = nodes.find(n => n.id === id);
+                if (node) {
+                    currentStyle = { ...node.style };
+                }
+            }
+
+            function deselectAll() {
+                selectedNodeId = null;
+                document.querySelectorAll('.node.selected').forEach(el => el.classList.remove('selected'));
+                updateToolbarFromSelection();
+            }
+
+            function addChildTo(parentId) {
+                const parent = nodes.find(n => n.id === parentId);
+                if (!parent) return;
+
+                let childY = parent.y + CHILD_OFFSET_Y;
+                let childX = parent.x;
+
+                // Smart Placement
+                let offset = 0;
+                let attempts = 0;
+                while (isOverlapping(childX, childY) && attempts < 25) {
+                    if (offset === 0) offset = CHILD_SPACING_X;
+                    else {
+                        offset = -offset;
+                        if (offset > 0) offset += CHILD_SPACING_X;
+                    }
+                    childX = parent.x + offset;
+                    attempts++;
+                }
+
+                createNode({ x: childX, y: childY, parentId: parentId });
+            }
+
+            function isOverlapping(x, y) {
+                return nodes.some(n => Math.abs(n.x - x) < 50 && Math.abs(n.y - y) < 50);
+            }
+
+            // --- Dragging ---
+
+            function startNodeDrag(e, node) {
+                isNodeDragging = true;
+                draggedNodeId = node.id;
+
+                const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
+                const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
+
+                dragOffset.x = mouseWorldX - node.x;
+                dragOffset.y = mouseWorldY - node.y;
+
+                document.body.style.cursor = 'grabbing';
+            }
+
+            function startNodeResize(e, node, type) {
+                isResizing = true;
+                resizingNodeId = node.id;
+                resizeType = type;
+
+                const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
+                const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
+
+                resizeStart.x = mouseWorldX;
+                resizeStart.y = mouseWorldY;
+                resizeStart.w = node.width;
+                resizeStart.h = node.height;
+
+                let cursor = 'nwse-resize';
+                if (type === 'r') cursor = 'col-resize';
+                if (type === 'b') cursor = 'row-resize';
+                document.body.style.cursor = cursor;
+            }
+
+            function startPan(e) {
+                isPanning = true;
+                panStart.x = e.clientX - viewState.x;
+                panStart.y = e.clientY - viewState.y;
+                canvasContainer.style.cursor = 'grabbing';
+
+                // If in format painter mode, cancel it on background click?
+                // "aplica enquanto o usuario não clicar no background" (for double click)
+                if (formatPainterMode === 'CONTINUOUS') {
+                    setFormatPainterMode('IDLE');
+                }
+            }
+
+            function stopDrag() {
+                isNodeDragging = false;
+                isResizing = false;
+                isPanning = false;
+                draggedNodeId = null;
+                resizingNodeId = null;
+                document.body.style.cursor = 'default';
+                // maintain cursor if format painter
+                if (formatPainterMode !== 'IDLE') {
+                    // css handles cursor
+                } else {
+                    canvasContainer.style.cursor = 'grab';
+                }
+            }
+
+            // --- Format Painter ---
+
+            function handleFormatPainterClick() {
+                if (!selectedNodeId) {
+                    showAlert("Aviso", "Selecione um nó primeiro para copiar o estilo.");
+                    return;
+                }
+
+                const node = nodes.find(n => n.id === selectedNodeId);
+                formatSourceStyle = { ...node.style };
+
+                // Logic for single vs double click handled by caller or state?
+                // Caller: onclick vs ondblclick.
+                // If single click, set mode SINGLE.
+                // If double, set mode CONTINUOUS.
+                // But we need to distinguish.
+            }
+
+            function setFormatPainterMode(mode) {
+                formatPainterMode = mode;
+                const btn = document.getElementById('format-painter-btn');
+                if (mode === 'IDLE') {
+                    btn.classList.remove('active');
+                    document.body.classList.remove('format-painter-mode');
+                } else {
+                    btn.classList.add('active');
+                    document.body.classList.add('format-painter-mode');
+                }
+            }
+
+            function handleFormatPainterApply(targetNode) {
+                if (!formatSourceStyle) return;
+
+                updateNodeStyle(targetNode.id, formatSourceStyle);
+
+                if (formatPainterMode === 'SINGLE') {
+                    setFormatPainterMode('IDLE');
+                }
+            }
+
+
+            // --- Listeners ---
+
+            function setupEventListeners() {
+                canvasContainer.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    zoom(e.deltaY > 0 ? -0.1 : 0.1);
+                });
+
+                canvasContainer.addEventListener('mousedown', (e) => {
+                    // If special click on BG
+                    if (e.target === canvasContainer || e.target === world || e.target === connectionsLayer || e.target.id === 'grid-pattern') {
+                        deselectAll();
+                        startPan(e);
+                    }
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (isNodeDragging && draggedNodeId) {
+                        const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
+                        const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
+
+                        const newX = mouseWorldX - dragOffset.x;
+                        const newY = mouseWorldY - dragOffset.y;
+
+                        updateNodePosition(draggedNodeId, newX, newY);
+                    } else if (isResizing && resizingNodeId) {
+                        const node = nodes.find(n => n.id === resizingNodeId);
+                        if (!node) return;
+
+                        const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
+                        const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
+
+                        const deltaX = mouseWorldX - resizeStart.x;
+                        const deltaY = mouseWorldY - resizeStart.y;
+
+                        if (resizeType.includes('r')) {
+                            node.width = Math.max(100, resizeStart.w + deltaX);
+                        }
+                        if (resizeType.includes('b')) {
+                            node.height = Math.max(50, resizeStart.h + deltaY);
                         }
 
-                        selectNode(node.id);
-                        startNodeDrag(e, node);
-                    });
-
-                    // Add button
-                    const addBtn = el.querySelector('.add-child-btn');
-                    addBtn.addEventListener('mousedown', (e) => {
-                        e.stopPropagation();
-                        addChildTo(node.id);
-                    });
-
-                    // Resize Listeners
-                    el.querySelectorAll('.resizer').forEach(resizer => {
-                        resizer.addEventListener('mousedown', (e) => {
-                            e.stopPropagation();
-                            startNodeResize(e, node, resizer.dataset.type);
-                        });
-                    });
-
-                    nodesLayer.appendChild(el);
-                }
-
-                // Style Application
-                el.style.left = node.x + 'px';
-                el.style.top = node.y + 'px';
-                el.style.width = node.width + 'px';
-                el.style.height = node.height + 'px';
-                el.style.backgroundColor = node.style.backgroundColor;
-                el.style.borderColor = node.style.borderColor;
-                el.style.borderWidth = node.style.borderWidth + 'px';
-                el.style.fontSize = node.style.fontSize + 'px';
-
-                const contentEl = el.querySelector('.node-content');
-                if (document.activeElement !== contentEl && contentEl.innerText !== node.text) {
-                    contentEl.innerText = node.text;
-                }
-                contentEl.style.color = node.style.color;
-
-                if (node.id === selectedNodeId) {
-                    el.classList.add('selected');
-                } else {
-                    el.classList.remove('selected');
-                }
-            });
-
-            updateConnections();
-        }
-
-        function updateConnections() {
-            connectionsLayer.innerHTML = '';
-
-            nodes.forEach(node => {
-                if (node.parentId) {
-                    const parent = nodes.find(n => n.id === node.parentId);
-                    if (parent) {
-                        drawLine(parent, node);
+                        const el = document.getElementById(node.id);
+                        if (el) {
+                            el.style.width = node.width + 'px';
+                            el.style.height = node.height + 'px';
+                        }
+                        updateConnections();
+                    } else if (isPanning) {
+                        viewState.x = e.clientX - panStart.x;
+                        viewState.y = e.clientY - panStart.y;
+                        updateWorldTransform();
                     }
-                }
-            });
-        }
-
-        function drawLine(startNode, endNode) {
-            const startEl = document.getElementById(startNode.id);
-            const endEl = document.getElementById(endNode.id);
-            if (!startEl || !endEl) return;
-
-            const startW = startEl.offsetWidth;
-            const startH = startEl.offsetHeight;
-            const endW = endEl.offsetWidth;
-            const endH = endEl.offsetHeight;
-
-            const x1 = startNode.x + startW / 2;
-            const y1 = startNode.y + startH / 2;
-            const x2 = endNode.x + endW / 2;
-            const y2 = endNode.y + endH / 2;
-
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('class', 'connection-line');
-
-            const d = `M ${x1} ${y1} C ${x1} ${y1 + 50}, ${x2} ${y2 - 50}, ${x2} ${y2}`;
-            path.setAttribute('d', d);
-            connectionsLayer.appendChild(path);
-        }
-
-        function updateWorldTransform() {
-            world.style.transform = `translate(${viewState.x}px, ${viewState.y}px) scale(${viewState.scale})`;
-        }
-
-        // --- Interaction Logic ---
-
-        function zoom(delta) {
-            viewState.scale += delta;
-            if (viewState.scale < 0.1) viewState.scale = 0.1;
-            updateWorldTransform();
-        }
-
-        function resetZoom() {
-            viewState.scale = 1;
-            updateWorldTransform();
-        }
-
-        function selectNode(id) {
-            selectedNodeId = id;
-            nodes.forEach(n => {
-                const el = document.getElementById(n.id);
-                if (el) {
-                    if (n.id === id) el.classList.add('selected');
-                    else el.classList.remove('selected');
-                }
-            });
-            updateToolbarFromSelection();
-
-            // If selecting a node, we might want to update currentStyle to match selection
-            // so next created node matches this one? User requirement says:
-            // "Faça a última configuração de estilo (borda, fonte, etc) persistir para o próximo nó criado"
-            // Usually this means if I change a setting. Does selecting change the "pen"?
-            // Let's assume selection sets current style context.
-            const node = nodes.find(n => n.id === id);
-            if (node) {
-                currentStyle = { ...node.style };
-            }
-        }
-
-        function deselectAll() {
-            selectedNodeId = null;
-            document.querySelectorAll('.node.selected').forEach(el => el.classList.remove('selected'));
-            updateToolbarFromSelection();
-        }
-
-        function addChildTo(parentId) {
-            const parent = nodes.find(n => n.id === parentId);
-            if (!parent) return;
-
-            let childY = parent.y + CHILD_OFFSET_Y;
-            let childX = parent.x;
-
-            // Smart Placement
-            let offset = 0;
-            let attempts = 0;
-            while (isOverlapping(childX, childY) && attempts < 25) {
-                if (offset === 0) offset = CHILD_SPACING_X;
-                else {
-                    offset = -offset;
-                    if (offset > 0) offset += CHILD_SPACING_X;
-                }
-                childX = parent.x + offset;
-                attempts++;
-            }
-
-            createNode({ x: childX, y: childY, parentId: parentId });
-        }
-
-        function isOverlapping(x, y) {
-            return nodes.some(n => Math.abs(n.x - x) < 50 && Math.abs(n.y - y) < 50);
-        }
-
-        // --- Dragging ---
-
-        function startNodeDrag(e, node) {
-            isNodeDragging = true;
-            draggedNodeId = node.id;
-
-            const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
-            const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
-
-            dragOffset.x = mouseWorldX - node.x;
-            dragOffset.y = mouseWorldY - node.y;
-
-            document.body.style.cursor = 'grabbing';
-        }
-
-        function startNodeResize(e, node, type) {
-            isResizing = true;
-            resizingNodeId = node.id;
-            resizeType = type;
-
-            const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
-            const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
-
-            resizeStart.x = mouseWorldX;
-            resizeStart.y = mouseWorldY;
-            resizeStart.w = node.width;
-            resizeStart.h = node.height;
-
-            let cursor = 'nwse-resize';
-            if (type === 'r') cursor = 'col-resize';
-            if (type === 'b') cursor = 'row-resize';
-            document.body.style.cursor = cursor;
-        }
-
-        function startPan(e) {
-            isPanning = true;
-            panStart.x = e.clientX - viewState.x;
-            panStart.y = e.clientY - viewState.y;
-            canvasContainer.style.cursor = 'grabbing';
-
-            // If in format painter mode, cancel it on background click?
-            // "aplica enquanto o usuario não clicar no background" (for double click)
-            if (formatPainterMode === 'CONTINUOUS') {
-                setFormatPainterMode('IDLE');
-            }
-        }
-
-        function stopDrag() {
-            isNodeDragging = false;
-            isResizing = false;
-            isPanning = false;
-            draggedNodeId = null;
-            resizingNodeId = null;
-            document.body.style.cursor = 'default';
-            // maintain cursor if format painter
-            if (formatPainterMode !== 'IDLE') {
-                // css handles cursor
-            } else {
-                canvasContainer.style.cursor = 'grab';
-            }
-        }
-
-        // --- Format Painter ---
-
-        function handleFormatPainterClick() {
-            if (!selectedNodeId) {
-                showAlert("Aviso", "Selecione um nó primeiro para copiar o estilo.");
-                return;
-            }
-
-            const node = nodes.find(n => n.id === selectedNodeId);
-            formatSourceStyle = { ...node.style };
-
-            // Logic for single vs double click handled by caller or state?
-            // Caller: onclick vs ondblclick.
-            // If single click, set mode SINGLE.
-            // If double, set mode CONTINUOUS.
-            // But we need to distinguish.
-        }
-
-        function setFormatPainterMode(mode) {
-            formatPainterMode = mode;
-            const btn = document.getElementById('format-painter-btn');
-            if (mode === 'IDLE') {
-                btn.classList.remove('active');
-                document.body.classList.remove('format-painter-mode');
-            } else {
-                btn.classList.add('active');
-                document.body.classList.add('format-painter-mode');
-            }
-        }
-
-        function handleFormatPainterApply(targetNode) {
-            if (!formatSourceStyle) return;
-
-            updateNodeStyle(targetNode.id, formatSourceStyle);
-
-            if (formatPainterMode === 'SINGLE') {
-                setFormatPainterMode('IDLE');
-            }
-        }
-
-
-        // --- Listeners ---
-
-        function setupEventListeners() {
-            canvasContainer.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                zoom(e.deltaY > 0 ? -0.1 : 0.1);
-            });
-
-            canvasContainer.addEventListener('mousedown', (e) => {
-                // If special click on BG
-                if (e.target === canvasContainer || e.target === world || e.target === connectionsLayer || e.target.id === 'grid-pattern') {
-                    deselectAll();
-                    startPan(e);
-                }
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (isNodeDragging && draggedNodeId) {
-                    const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
-                    const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
-
-                    const newX = mouseWorldX - dragOffset.x;
-                    const newY = mouseWorldY - dragOffset.y;
-
-                    updateNodePosition(draggedNodeId, newX, newY);
-                } else if (isResizing && resizingNodeId) {
-                    const node = nodes.find(n => n.id === resizingNodeId);
-                    if (!node) return;
-
-                    const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
-                    const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
-
-                    const deltaX = mouseWorldX - resizeStart.x;
-                    const deltaY = mouseWorldY - resizeStart.y;
-
-                    if (resizeType.includes('r')) {
-                        node.width = Math.max(100, resizeStart.w + deltaX);
-                    }
-                    if (resizeType.includes('b')) {
-                        node.height = Math.max(50, resizeStart.h + deltaY);
-                    }
-
-                    const el = document.getElementById(node.id);
-                    if (el) {
-                        el.style.width = node.width + 'px';
-                        el.style.height = node.height + 'px';
-                    }
-                    updateConnections();
-                } else if (isPanning) {
-                    viewState.x = e.clientX - panStart.x;
-                    viewState.y = e.clientY - panStart.y;
-                    updateWorldTransform();
-                }
-            });
-
-            window.addEventListener('mouseup', stopDrag);
-
-            // -- Toolbar Inputs --
-
-            const bgPicker = document.getElementById('bg-color-picker');
-            bgPicker.addEventListener('input', (e) => {
-                if (selectedNodeId) {
-                    updateNodeStyle(selectedNodeId, { backgroundColor: e.target.value });
-                    document.getElementById('bg-preview').style.backgroundColor = e.target.value;
-                }
-            });
-
-            const borderPicker = document.getElementById('border-color-picker');
-            borderPicker.addEventListener('input', (e) => {
-                if (selectedNodeId) {
-                    updateNodeStyle(selectedNodeId, { borderColor: e.target.value });
-                    document.getElementById('border-preview').style.borderColor = e.target.value;
-                }
-            });
-
-            const textPicker = document.getElementById('text-color-picker');
-            textPicker.addEventListener('input', (e) => {
-                if (selectedNodeId) {
-                    updateNodeStyle(selectedNodeId, { color: e.target.value });
-                }
-            });
-
-            const borderWidthBtn = document.getElementById('border-width-btn');
-            const borderWidthSlider = document.getElementById('border-width-slider');
-            borderWidthBtn.addEventListener('click', (e) => {
-                // Prevent closing if clicking slider
-                if (e.target !== borderWidthSlider) {
-                    toggleSlider('border-width-popover', borderWidthBtn);
-                }
-            });
-            borderWidthSlider.addEventListener('input', (e) => updateNodeStyle(selectedNodeId, { borderWidth: e.target.value }));
-
-            const fontSizeBtn = document.getElementById('font-size-btn');
-            const fontSizeSlider = document.getElementById('font-size-slider');
-            fontSizeBtn.addEventListener('click', (e) => {
-                if (e.target !== fontSizeSlider) {
-                    toggleSlider('font-size-popover', fontSizeBtn);
-                }
-            });
-            fontSizeSlider.addEventListener('input', (e) => updateNodeStyle(selectedNodeId, { fontSize: e.target.value }));
-
-            // Format Painter
-            const fpBtn = document.getElementById('format-painter-btn');
-            // Detect single vs double click
-            let clickTimer = null;
-            fpBtn.addEventListener('click', (e) => {
-                if (clickTimer) {
-                    clearTimeout(clickTimer);
-                    clickTimer = null;
-                    // Double Click logic
-                    handleFormatPainterClick();
-                    setFormatPainterMode('CONTINUOUS');
-                } else {
-                    clickTimer = setTimeout(() => {
-                        clickTimer = null;
-                        // Single Click logic
-                        handleFormatPainterClick();
-                        setFormatPainterMode('SINGLE');
-                    }, 250);
-                }
-            });
-
-            document.getElementById('delete-btn').addEventListener('click', () => {
-                if (selectedNodeId) deleteNode(selectedNodeId);
-            });
-
-            document.getElementById('reset-view-btn').addEventListener('click', () => {
-                resetViewPosition();
-            });
-
-            document.getElementById('export-btn').addEventListener('click', () => {
-                const data = JSON.stringify(nodes, null, 2);
-                navigator.clipboard.writeText(data).then(() => {
-                    showAlert("Exportar", "Dados exportados para a área de transferência!");
                 });
-            });
 
-            document.getElementById('import-btn').addEventListener('click', () => {
-                showModal('import-modal');
-                document.getElementById('import-textarea').value = '';
-                document.getElementById('import-textarea').focus();
-            });
+                window.addEventListener('mouseup', stopDrag);
 
-            // Import logic
-            const btnConfirmImport = document.getElementById('btn-confirm-import');
-            const importTextarea = document.getElementById('import-textarea');
-            importTextarea.addEventListener('input', (e) => {
-                try {
-                    const json = JSON.parse(e.target.value);
-                    btnConfirmImport.disabled = !Array.isArray(json);
-                } catch (err) {
-                    btnConfirmImport.disabled = true;
-                }
-            });
+                // -- Toolbar Inputs --
 
-            btnConfirmImport.addEventListener('click', () => {
-                try {
-                    const json = JSON.parse(importTextarea.value);
-                    if (Array.isArray(json)) {
-                        nodes = [];
-                        json.forEach(n => createNode({ ...n, id: n.id, style: n.style }));
-                        closeModal();
-                        deselectAll();
+                const bgPicker = document.getElementById('bg-color-picker');
+                bgPicker.addEventListener('input', (e) => {
+                    if (selectedNodeId) {
+                        updateNodeStyle(selectedNodeId, { backgroundColor: e.target.value });
+                        document.getElementById('bg-preview').style.backgroundColor = e.target.value;
                     }
-                } catch (e) {
-                    showAlert('Erro', 'Erro ao importar JSON.');
-                }
-            });
+                });
 
-            // Hide sliders on click outside
-            document.addEventListener('mousedown', (e) => {
-                // Close sliders
-                if (!borderWidthBtn.contains(e.target)) closePopover('border-width-popover', borderWidthBtn);
-                if (!fontSizeBtn.contains(e.target)) closePopover('font-size-popover', fontSizeBtn);
-            });
-        }
+                const borderPicker = document.getElementById('border-color-picker');
+                borderPicker.addEventListener('input', (e) => {
+                    if (selectedNodeId) {
+                        updateNodeStyle(selectedNodeId, { borderColor: e.target.value });
+                        document.getElementById('border-preview').style.borderColor = e.target.value;
+                    }
+                });
 
-        function toggleSlider(id, btn) {
-            const popover = document.getElementById(id);
-            const isVisible = popover.style.display === 'block';
+                const textPicker = document.getElementById('text-color-picker');
+                textPicker.addEventListener('input', (e) => {
+                    if (selectedNodeId) {
+                        updateNodeStyle(selectedNodeId, { color: e.target.value });
+                    }
+                });
 
-            // Close others 
-            document.querySelectorAll('.slider-popover').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('slider-open'));
+                const borderWidthBtn = document.getElementById('border-width-btn');
+                const borderWidthSlider = document.getElementById('border-width-slider');
+                borderWidthBtn.addEventListener('click', (e) => {
+                    // Prevent closing if clicking slider
+                    if (e.target !== borderWidthSlider) {
+                        toggleSlider('border-width-popover', borderWidthBtn);
+                    }
+                });
+                borderWidthSlider.addEventListener('input', (e) => updateNodeStyle(selectedNodeId, { borderWidth: e.target.value }));
 
-            if (!isVisible) {
-                popover.style.display = 'block';
-                btn.classList.add('slider-open'); // Helps hide tooltip
+                const fontSizeBtn = document.getElementById('font-size-btn');
+                const fontSizeSlider = document.getElementById('font-size-slider');
+                fontSizeBtn.addEventListener('click', (e) => {
+                    if (e.target !== fontSizeSlider) {
+                        toggleSlider('font-size-popover', fontSizeBtn);
+                    }
+                });
+                fontSizeSlider.addEventListener('input', (e) => updateNodeStyle(selectedNodeId, { fontSize: e.target.value }));
+
+                // Format Painter
+                const fpBtn = document.getElementById('format-painter-btn');
+                // Detect single vs double click
+                let clickTimer = null;
+                fpBtn.addEventListener('click', (e) => {
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                        clickTimer = null;
+                        // Double Click logic
+                        handleFormatPainterClick();
+                        setFormatPainterMode('CONTINUOUS');
+                    } else {
+                        clickTimer = setTimeout(() => {
+                            clickTimer = null;
+                            // Single Click logic
+                            handleFormatPainterClick();
+                            setFormatPainterMode('SINGLE');
+                        }, 250);
+                    }
+                });
+
+                document.getElementById('delete-btn').addEventListener('click', () => {
+                    if (selectedNodeId) deleteNode(selectedNodeId);
+                });
+
+                document.getElementById('reset-view-btn').addEventListener('click', () => {
+                    resetViewPosition();
+                });
+
+                document.getElementById('export-btn').addEventListener('click', () => {
+                    const data = JSON.stringify({
+                        title: projectTitle,
+                        nodes: nodes
+                    }, null, 2);
+                    navigator.clipboard.writeText(data).then(() => {
+                        showAlert("Exportar", "Dados exportados para a área de transferência!");
+                    });
+                });
+
+                document.getElementById('import-btn').addEventListener('click', () => {
+                    showModal('import-modal');
+                    document.getElementById('import-textarea').value = '';
+                    document.getElementById('import-textarea').focus();
+                });
+
+                // Import logic
+                const btnConfirmImport = document.getElementById('btn-confirm-import');
+                const importTextarea = document.getElementById('import-textarea');
+                importTextarea.addEventListener('input', (e) => {
+                    try {
+                        const json = JSON.parse(e.target.value);
+                        const isValid = Array.isArray(json) || (json.nodes && Array.isArray(json.nodes));
+                        btnConfirmImport.disabled = !isValid;
+                    } catch (err) {
+                        btnConfirmImport.disabled = true;
+                    }
+                });
+
+                btnConfirmImport.addEventListener('click', () => {
+                    try {
+                        const json = JSON.parse(importTextarea.value);
+                        let importedNodes = [];
+                        if (Array.isArray(json)) {
+                            importedNodes = json;
+                            projectTitle = "Organograma Importado";
+                        } else if (json.nodes && Array.isArray(json.nodes)) {
+                            importedNodes = json.nodes;
+                            projectTitle = json.title || "Organograma Importado";
+                        }
+
+                        if (importedNodes.length > 0 || Array.isArray(json)) {
+                            nodes = [];
+                            document.getElementById('project-title').innerText = projectTitle;
+                            importedNodes.forEach(n => createNode({ ...n, id: n.id, style: n.style }));
+                            closeModal();
+                            deselectAll();
+                        }
+                    } catch (e) {
+                        showAlert('Erro', 'Erro ao importar JSON.');
+                    }
+                });
+
+                // Title Sync
+                const titleEl = document.getElementById('project-title');
+                titleEl.addEventListener('blur', () => {
+                    projectTitle = titleEl.innerText;
+                });
+
+                // Hide sliders on click outside
+                document.addEventListener('mousedown', (e) => {
+                    // Close sliders
+                    if (!borderWidthBtn.contains(e.target)) closePopover('border-width-popover', borderWidthBtn);
+                    if (!fontSizeBtn.contains(e.target)) closePopover('font-size-popover', fontSizeBtn);
+                });
             }
-        }
 
-        function closePopover(id, btn) {
-            document.getElementById(id).style.display = 'none';
-            btn.classList.remove('slider-open');
-        }
+            function toggleSlider(id, btn) {
+                const popover = document.getElementById(id);
+                const isVisible = popover.style.display === 'block';
 
-        function updateToolbarFromSelection() {
-            const bgInput = document.getElementById('bg-color-picker');
-            const bgPreview = document.getElementById('bg-preview');
-            const borderInput = document.getElementById('border-color-picker');
-            const borderPreview = document.getElementById('border-preview');
-            const textInput = document.getElementById('text-color-picker');
-            const widthSlider = document.getElementById('border-width-slider');
-            const fontSlider = document.getElementById('font-size-slider');
+                // Close others 
+                document.querySelectorAll('.slider-popover').forEach(p => p.style.display = 'none');
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('slider-open'));
 
-            const style = selectedNodeId ? nodes.find(n => n.id === selectedNodeId).style : currentStyle;
+                if (!isVisible) {
+                    popover.style.display = 'block';
+                    btn.classList.add('slider-open'); // Helps hide tooltip
+                }
+            }
 
-            bgInput.value = style.backgroundColor;
-            bgPreview.style.backgroundColor = style.backgroundColor;
+            function closePopover(id, btn) {
+                document.getElementById(id).style.display = 'none';
+                btn.classList.remove('slider-open');
+            }
 
-            borderInput.value = style.borderColor;
-            borderPreview.style.borderColor = style.borderColor;
+            function updateToolbarFromSelection() {
+                const bgInput = document.getElementById('bg-color-picker');
+                const bgPreview = document.getElementById('bg-preview');
+                const borderInput = document.getElementById('border-color-picker');
+                const borderPreview = document.getElementById('border-preview');
+                const textInput = document.getElementById('text-color-picker');
+                const widthSlider = document.getElementById('border-width-slider');
+                const fontSlider = document.getElementById('font-size-slider');
 
-            textInput.value = style.color;
+                const style = selectedNodeId ? nodes.find(n => n.id === selectedNodeId).style : currentStyle;
 
-            widthSlider.value = style.borderWidth;
-            fontSlider.value = style.fontSize;
-        }
+                bgInput.value = style.backgroundColor;
+                bgPreview.style.backgroundColor = style.backgroundColor;
 
-        // --- Modal System ---
+                borderInput.value = style.borderColor;
+                borderPreview.style.borderColor = style.borderColor;
 
-        function showModal(id) {
-            modalOverlay.style.display = 'flex';
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
+                textInput.value = style.color;
 
-        function closeModal() {
-            modalOverlay.style.display = 'none';
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-        }
+                widthSlider.value = style.borderWidth;
+                fontSlider.value = style.fontSize;
+            }
 
-        function showAlert(title, message) {
-            document.getElementById('alert-title').innerText = title;
-            document.getElementById('alert-message').innerText = message;
-            showModal('alert-modal');
-        }
+            // --- Modal System ---
 
-        function showConfirm(title, message, onConfirm) {
-            document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-message').innerText = message;
+            function showModal(id) {
+                modalOverlay.style.display = 'flex';
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            }
 
-            const yesBtn = document.getElementById('btn-confirm-yes');
-            // Remove old listeners to avoid stacking
-            const newBtn = yesBtn.cloneNode(true);
-            yesBtn.parentNode.replaceChild(newBtn, yesBtn);
+            function closeModal() {
+                modalOverlay.style.display = 'none';
+                document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+            }
 
-            newBtn.addEventListener('click', () => {
-                onConfirm();
-                closeModal();
-            });
-            newBtn.classList.add('btn-danger'); // Style for delete mostly
+            function showAlert(title, message) {
+                document.getElementById('alert-title').innerText = title;
+                document.getElementById('alert-message').innerText = message;
+                showModal('alert-modal');
+            }
 
-            showModal('confirm-modal');
-        }
+            function showConfirm(title, message, onConfirm) {
+                document.getElementById('confirm-title').innerText = title;
+                document.getElementById('confirm-message').innerText = message;
 
-        // --- Start ---
-        init();
+                const yesBtn = document.getElementById('btn-confirm-yes');
+                // Remove old listeners to avoid stacking
+                const newBtn = yesBtn.cloneNode(true);
+                yesBtn.parentNode.replaceChild(newBtn, yesBtn);
 
-    </script>
+                newBtn.addEventListener('click', () => {
+                    onConfirm();
+                    closeModal();
+                });
+                newBtn.classList.add('btn-danger'); // Style for delete mostly
+
+                showModal('confirm-modal');
+            }
+
+            // --- Start ---
+            init();
+
+        </script>
 </body>
 
 </html>
