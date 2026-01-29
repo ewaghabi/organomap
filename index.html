@@ -351,6 +351,7 @@
             word-wrap: break-word;
             white-space: pre-wrap;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
@@ -917,6 +918,14 @@
                             requestAnimationFrame(updateConnections);
                         });
 
+                        contentEl.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                // Default behavior for Enter in contenteditable is newline
+                                // but we might want to ensure it's just a newline and doesn't blur
+                                e.stopPropagation();
+                            }
+                        });
+
                         // Interaction for Title
                         titleEl.addEventListener('dblclick', (e) => {
                             e.stopPropagation();
@@ -930,6 +939,12 @@
                             titleEl.contentEditable = false;
                             el.classList.remove('editing');
                             updateNodeTitle(node.id, titleEl.innerText);
+                        });
+
+                        titleEl.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault(); // Don't allow newlines in title
+                            }
                         });
 
                         el.addEventListener('mousedown', (e) => {
