@@ -722,6 +722,7 @@
             let nodes = [];
             let selectedNodeId = null;
             let isNodeDragging = false;
+            let isSubtreeDrag = false;
             let isResizing = false;
             let isPanning = false;
             let dragOffset = { x: 0, y: 0 };
@@ -729,6 +730,7 @@
             let resizeType = ''; // 'r', 'b', 'rb'
             let panStart = { x: 0, y: 0 };
             let draggedNodeId = null;
+            let draggedSubtreeIds = [];
             let resizingNodeId = null;
             let viewState = { x: 0, y: 0, scale: 1 };
 
@@ -947,6 +949,10 @@
                             startNodeDrag(e, node);
                         });
 
+                        el.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                        });
+
                         // Add button
                         const addBtn = el.querySelector('.add-child-btn');
                         addBtn.addEventListener('mousedown', (e) => {
@@ -1121,6 +1127,13 @@
             function startNodeDrag(e, node) {
                 isNodeDragging = true;
                 draggedNodeId = node.id;
+                isSubtreeDrag = (e.button === 2 || (e.button === 0 && e.shiftKey)); // Right click or Shift+Left
+
+                if (isSubtreeDrag) {
+                    draggedSubtreeIds = getSubtreeIds(node.id);
+                } else {
+                    draggedSubtreeIds = [];
+                }
 
                 const mouseWorldX = (e.clientX - viewState.x) / viewState.scale;
                 const mouseWorldY = (e.clientY - viewState.y) / viewState.scale;
@@ -1129,6 +1142,14 @@
                 dragOffset.y = mouseWorldY - node.y;
 
                 document.body.style.cursor = 'grabbing';
+            }
+
+            function getSubtreeIds(nodeId) {
+                let ids = [nodeId];
+                nodes.filter(n => n.parentId === nodeId).forEach(child => {
+                    ids = ids.concat(getSubtreeIds(child.id));
+                });
+                return ids;
             }
 
             function startNodeResize(e, node, type) {
@@ -1228,6 +1249,9 @@
                 });
 
                 canvasContainer.addEventListener('mousedown', (e) => {
+                    // Only left-click or middle-click on BG pans
+                    if (e.button !== 0 && e.button !== 1) return;
+
                     // If special click on BG
                     if (e.target === canvasContainer || e.target === world || e.target === connectionsLayer || e.target.id === 'grid-pattern') {
                         deselectAll();
@@ -1243,7 +1267,29 @@
                         const newX = mouseWorldX - dragOffset.x;
                         const newY = mouseWorldY - dragOffset.y;
 
-                        updateNodePosition(draggedNodeId, newX, newY);
+                        if (isSubtreeDrag) {
+                            const node = nodes.find(n => n.id === draggedNodeId);
+                            const deltaX = newX - node.x;
+                            const deltaY = newY - node.y;
+
+                            if (deltaX !== 0 || deltaY !== 0) {
+                                draggedSubtreeIds.forEach(id => {
+                                    const n = nodes.find(item => item.id === id);
+                                    if (n) {
+                                        n.x += deltaX;
+                                        n.y += deltaY;
+                                        const el = document.getElementById(id);
+                                        if (el) {
+                                            el.style.left = n.x + 'px';
+                                            el.style.top = n.y + 'px';
+                                        }
+                                    }
+                                });
+                                updateConnections();
+                            }
+                        } else {
+                            updateNodePosition(draggedNodeId, newX, newY);
+                        }
                     } else if (isResizing && resizingNodeId) {
                         const node = nodes.find(n => n.id === resizingNodeId);
                         if (!node) return;
