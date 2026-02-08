@@ -21,3 +21,30 @@ Simply open `index.html` in any modern web browser.
 - Vanilla JavaScript
 - CSS3 (Variables + Flexbox/Grid)
 - HTML5 (SVG for connections)
+
+## Regression test suite (E2E)
+
+The production app remains a single file (`index.html`).  
+Test infrastructure lives outside the app and does not affect runtime payload.
+
+### Setup
+
+```bash
+npm install
+npx playwright install --with-deps chromium
+```
+
+### Run tests
+
+```bash
+npm run test:e2e
+```
+
+Useful commands:
+
+```bash
+npm run test:e2e:headed
+npm run test:e2e:debug
+npm run test:e2e:update-snapshots
+npm run test:e2e:report
+```
