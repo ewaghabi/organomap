@@ -17,6 +17,7 @@ export async function getModel(page) {
       parentId: n.parentId,
       title: n.title,
       text: n.text,
+      showHeader: n.showHeader,
       style: { ...n.style }
     }))
   }));

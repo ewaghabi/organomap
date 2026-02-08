@@ -76,6 +76,34 @@ test.describe('Organomap - regression suite', () => {
     await expect(content).toContainText('Linha 2');
   });
 
+  test('toggles header visibility per selected node and preserves title content', async ({ page }) => {
+    await gotoApp(page);
+    const rootId = (await getModel(page)).nodes[0].id;
+
+    await expect(page.locator('#header-toggle')).toBeEnabled();
+    await expect(page.locator('#header-toggle')).toBeChecked();
+
+    const title = page.locator(`#${rootId} .node-title`);
+    await title.dblclick();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('Titulo Persistente');
+    await page.locator(`#${rootId} .node-content`).click();
+
+    await page.locator('#header-toggle-btn').click();
+    await expect(page.locator('#header-toggle')).not.toBeChecked();
+    await expect(page.locator(`#${rootId}`)).toHaveClass(/no-header/);
+    expect((await getModel(page)).nodes[0].showHeader).toBe(false);
+
+    await page.locator('#header-toggle-btn').click();
+    await expect(page.locator('#header-toggle')).toBeChecked();
+    await expect(page.locator(`#${rootId}`)).not.toHaveClass(/no-header/);
+    await expect(page.locator(`#${rootId} .node-title`)).toHaveText('Titulo Persistente');
+    expect((await getModel(page)).nodes[0].showHeader).toBe(true);
+
+    await page.locator('#canvas-container').click({ position: { x: 120, y: 140 } });
+    await expect(page.locator('#header-toggle')).toBeDisabled();
+  });
+
   test('drags a single node without moving the parent', async ({ page }) => {
     await gotoApp(page);
     const rootId = (await getModel(page)).nodes[0].id;
@@ -225,6 +253,7 @@ test.describe('Organomap - regression suite', () => {
           title: 'Root',
           text: 'Texto root',
           parentId: null,
+          showHeader: true,
           style: {
             backgroundColor: '#ffffff',
             borderColor: '#cccccc',
@@ -242,6 +271,7 @@ test.describe('Organomap - regression suite', () => {
           title: 'Child',
           text: 'Texto child',
           parentId: 'node-root',
+          showHeader: false,
           style: {
             backgroundColor: '#ffeeee',
             borderColor: '#aa4444',
@@ -256,10 +286,18 @@ test.describe('Organomap - regression suite', () => {
     await expect(page.locator('#project-title')).toHaveText('Mapa Importado');
     await expect(page.locator('#nodes-layer .node')).toHaveCount(2);
     await expect(page.locator('#connections-layer path')).toHaveCount(1);
+    await expect(page.locator('#node-child')).toHaveClass(/no-header/);
+
+    await page.locator('#node-child').click();
+    await expect(page.locator('#header-toggle')).toBeEnabled();
+    await expect(page.locator('#header-toggle')).not.toBeChecked();
   });
 
   test('exports to clipboard and shows success feedback', async ({ page }) => {
     await gotoApp(page);
+    await page.locator('#header-toggle-btn').click();
+    expect((await getModel(page)).nodes[0].showHeader).toBe(false);
+
     await page.evaluate(() => {
       window.__copied = null;
       Object.defineProperty(navigator, 'clipboard', {
@@ -281,6 +319,7 @@ test.describe('Organomap - regression suite', () => {
     expect(parsed).toHaveProperty('title');
     expect(Array.isArray(parsed.nodes)).toBe(true);
     expect(parsed.nodes.length).toBeGreaterThan(0);
+    expect(parsed.nodes[0].showHeader).toBe(false);
   });
 
   test('updates view transform for zoom, pan and reset actions', async ({ page }) => {

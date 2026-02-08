@@ -111,6 +111,12 @@
             color: var(--primary-color);
         }
 
+        .tool-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         /* Tooltip */
         .tool-btn[data-tooltip]::after {
             content: attr(data-tooltip);
@@ -148,6 +154,30 @@
             stroke: currentColor;
             stroke-width: 2;
             fill: none;
+        }
+
+        .header-toggle-btn {
+            flex-direction: column;
+            gap: 2px;
+            color: #334155;
+        }
+
+        .header-toggle-icon {
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .header-toggle-input {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .header-toggle-input:disabled {
+            cursor: not-allowed;
         }
 
         .color-picker-wrapper {
@@ -332,6 +362,14 @@
             min-height: 1.5em;
             border-radius: 6px 6px 0 0;
             /* Match node border-radius */
+        }
+
+        .node.no-header .node-title-bar {
+            display: none;
+        }
+
+        .node.no-header .node-content {
+            border-radius: 6px;
         }
 
         .node-title {
@@ -615,6 +653,11 @@
                 </svg>
             </div>
 
+            <div class="tool-btn header-toggle-btn disabled" id="header-toggle-btn" data-tooltip="Mostrar cabeçalho (Show Header)">
+                <span class="header-toggle-icon">HDR</span>
+                <input type="checkbox" id="header-toggle" class="header-toggle-input" checked disabled aria-label="Mostrar cabeçalho">
+            </div>
+
             <div class="divider"></div>
 
             <!-- Action Tools -->
@@ -790,7 +833,7 @@
                 updateWorldTransform();
             }
 
-            function createNode({ x, y, title = "<Título>", text = DEFAULT_TEXT, parentId = null, isRoot = false, id = null, style = null, width = 180, height = 100 }) {
+            function createNode({ x, y, title = "<Título>", text = DEFAULT_TEXT, parentId = null, isRoot = false, id = null, style = null, width = 180, height = 100, showHeader = true }) {
                 const nodeId = id || 'node-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
 
                 // Use provided style or clone current persistent style
@@ -805,6 +848,7 @@
                     title,
                     text,
                     parentId,
+                    showHeader: showHeader !== false,
                     style: nodeStyle
                 };
                 nodes.push(newNode);
@@ -852,6 +896,15 @@
                 const node = nodes.find(n => n.id === id);
                 if (node) {
                     node.title = newTitle;
+                }
+            }
+
+            function updateNodeHeaderVisibility(id, showHeader) {
+                const node = nodes.find(n => n.id === id);
+                if (node) {
+                    node.showHeader = !!showHeader;
+                    render();
+                    updateToolbarFromSelection();
                 }
             }
 
@@ -995,6 +1048,12 @@
                     const titleBarEl = el.querySelector('.node-title-bar');
                     const titleEl = el.querySelector('.node-title');
                     const contentEl = el.querySelector('.node-content');
+
+                    if (node.showHeader === false) {
+                        el.classList.add('no-header');
+                    } else {
+                        el.classList.remove('no-header');
+                    }
 
                     // Apply Derived Styling to Title Bar
                     titleBarEl.style.backgroundColor = node.style.color;
@@ -1399,6 +1458,21 @@
                     }
                 });
 
+                const headerToggleBtn = document.getElementById('header-toggle-btn');
+                const headerToggle = document.getElementById('header-toggle');
+                headerToggleBtn.addEventListener('click', (e) => {
+                    if (headerToggle.disabled) return;
+                    if (e.target !== headerToggle) {
+                        headerToggle.checked = !headerToggle.checked;
+                        headerToggle.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+                headerToggle.addEventListener('change', (e) => {
+                    if (selectedNodeId) {
+                        updateNodeHeaderVisibility(selectedNodeId, e.target.checked);
+                    }
+                });
+
                 document.getElementById('delete-btn').addEventListener('click', () => {
                     if (selectedNodeId) deleteNode(selectedNodeId);
                 });
@@ -1501,8 +1575,11 @@
                 const textInput = document.getElementById('text-color-picker');
                 const widthSlider = document.getElementById('border-width-slider');
                 const fontSlider = document.getElementById('font-size-slider');
+                const headerToggle = document.getElementById('header-toggle');
+                const headerToggleBtn = document.getElementById('header-toggle-btn');
 
-                const style = selectedNodeId ? nodes.find(n => n.id === selectedNodeId).style : currentStyle;
+                const selectedNode = selectedNodeId ? nodes.find(n => n.id === selectedNodeId) : null;
+                const style = selectedNode ? selectedNode.style : currentStyle;
 
                 bgInput.value = style.backgroundColor;
                 bgPreview.style.backgroundColor = style.backgroundColor;
@@ -1514,6 +1591,16 @@
 
                 widthSlider.value = style.borderWidth;
                 fontSlider.value = style.fontSize;
+
+                if (selectedNode) {
+                    headerToggle.disabled = false;
+                    headerToggleBtn.classList.remove('disabled');
+                    headerToggle.checked = selectedNode.showHeader !== false;
+                } else {
+                    headerToggle.disabled = true;
+                    headerToggleBtn.classList.add('disabled');
+                    headerToggle.checked = true;
+                }
             }
 
             // --- Modal System ---
