@@ -240,11 +240,7 @@
             position: relative;
             overflow: hidden;
             height: 100%;
-            cursor: grab;
-        }
-
-        #canvas-container:active {
-            cursor: grabbing;
+            cursor: default;
         }
 
         /* Format Painter Custom Cursor */
@@ -1083,8 +1079,15 @@
                                 return;
                             }
 
-                            selectNode(node.id);
-                            startNodeDrag(e, node);
+                            if (e.button === 0) {
+                                selectNode(node.id);
+                                startNodeDrag(e, node);
+                                return;
+                            }
+
+                            if (e.button === 2) {
+                                startPan(e);
+                            }
                         });
 
                         el.addEventListener('contextmenu', (e) => {
@@ -1271,7 +1274,7 @@
             function startNodeDrag(e, node) {
                 isNodeDragging = true;
                 draggedNodeId = node.id;
-                isSubtreeDrag = (e.button === 2 || (e.button === 0 && e.shiftKey)); // Right click or Shift+Left
+                isSubtreeDrag = (e.button === 0 && e.shiftKey); // Shift+Left drag
 
                 if (isSubtreeDrag) {
                     draggedSubtreeIds = getSubtreeIds(node.id);
@@ -1316,10 +1319,12 @@
             }
 
             function startPan(e) {
+                e.preventDefault();
                 isPanning = true;
                 panStart.x = e.clientX - viewState.x;
                 panStart.y = e.clientY - viewState.y;
-                canvasContainer.style.cursor = 'grabbing';
+                canvasContainer.style.cursor = 'grab';
+                document.body.style.cursor = 'grab';
 
                 // If in format painter mode, cancel it on background click?
                 // "aplica enquanto o usuario não clicar no background" (for double click)
@@ -1339,7 +1344,7 @@
                 if (formatPainterMode !== 'IDLE') {
                     // css handles cursor
                 } else {
-                    canvasContainer.style.cursor = 'grab';
+                    canvasContainer.style.cursor = 'default';
                 }
             }
 
@@ -1393,14 +1398,18 @@
                 });
 
                 canvasContainer.addEventListener('mousedown', (e) => {
-                    // Only left-click or middle-click on BG pans
-                    if (e.button !== 0 && e.button !== 1) return;
+                    // Right-click on BG pans.
+                    if (e.button !== 2) return;
 
                     // If special click on BG
                     if (e.target === canvasContainer || e.target === world || e.target === connectionsLayer || e.target.id === 'grid-pattern') {
                         deselectAll();
                         startPan(e);
                     }
+                });
+
+                canvasContainer.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
                 });
 
                 window.addEventListener('mousemove', (e) => {

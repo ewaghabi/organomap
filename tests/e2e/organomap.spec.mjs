@@ -127,7 +127,8 @@ test.describe('Organomap - regression suite', () => {
     await expect(page.locator(`#${rootId} .node-title`)).toHaveText('Titulo Persistente');
     expect((await getModel(page)).nodes[0].showHeader).toBe(true);
 
-    await page.locator('#canvas-container').click({ position: { x: 120, y: 140 } });
+    const canvasBox = await page.locator('#canvas-container').boundingBox();
+    await page.mouse.click(canvasBox.x + 120, canvasBox.y + 140, { button: 'right' });
     await expect(page.locator('#header-toggle')).toBeDisabled();
   });
 
@@ -150,6 +151,33 @@ test.describe('Organomap - regression suite', () => {
     expect(afterChild.y).toBeGreaterThan(child.y);
     expect(afterRoot.x).toBe(root.x);
     expect(afterRoot.y).toBe(root.y);
+  });
+
+  test('right-drag on node pans canvas and does not move node/subtree', async ({ page }) => {
+    await gotoApp(page);
+    const rootId = (await getModel(page)).nodes[0].id;
+    await clickAddChild(page, rootId);
+    const childId = (await getModel(page)).nodes.find((n) => n.parentId === rootId).id;
+    await clickAddChild(page, childId);
+
+    const beforeModel = byId((await getModel(page)).nodes);
+    const beforeView = await getViewState(page);
+
+    const box = await page.locator(`#${childId}`).boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down({ button: 'right' });
+    await page.mouse.move(box.x + box.width / 2 + 90, box.y + box.height / 2 + 70);
+    await page.mouse.up({ button: 'right' });
+
+    const afterModel = byId((await getModel(page)).nodes);
+    const afterView = await getViewState(page);
+
+    expect(afterView.x).not.toBe(beforeView.x);
+    expect(afterView.y).not.toBe(beforeView.y);
+    expect(afterModel[rootId].x).toBe(beforeModel[rootId].x);
+    expect(afterModel[rootId].y).toBe(beforeModel[rootId].y);
+    expect(afterModel[childId].x).toBe(beforeModel[childId].x);
+    expect(afterModel[childId].y).toBe(beforeModel[childId].y);
   });
 
   test('shift-drag moves the full subtree while preserving relative offsets', async ({ page }) => {
@@ -256,7 +284,8 @@ test.describe('Organomap - regression suite', () => {
     await expect(page.locator('body')).toHaveClass(/format-painter-mode/);
 
     // Click below the fixed header to hit the actual canvas background.
-    await page.locator('#canvas-container').click({ position: { x: 120, y: 140 } });
+    const canvasBox = await page.locator('#canvas-container').boundingBox();
+    await page.mouse.click(canvasBox.x + 120, canvasBox.y + 140, { button: 'right' });
     await expect(page.locator('body')).not.toHaveClass(/format-painter-mode/);
   });
 
@@ -372,9 +401,9 @@ test.describe('Organomap - regression suite', () => {
     const startX = canvasBox.x + canvasBox.width * 0.7;
     const startY = canvasBox.y + canvasBox.height * 0.7;
     await page.mouse.move(startX, startY);
-    await page.mouse.down({ button: 'left' });
+    await page.mouse.down({ button: 'right' });
     await page.mouse.move(startX + 80, startY + 60);
-    await page.mouse.up({ button: 'left' });
+    await page.mouse.up({ button: 'right' });
     const afterPan = await getViewState(page);
     expect(afterPan.x).not.toBe(afterZoomIn.x);
     expect(afterPan.y).not.toBe(afterZoomIn.y);
