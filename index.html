@@ -514,16 +514,6 @@
             display: flex;
         }
 
-        #import-textarea {
-            width: 100%;
-            height: 150px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: monospace;
-            resize: vertical;
-        }
-
         .modal-buttons {
             display: flex;
             justify-content: flex-end;
@@ -677,27 +667,18 @@
 
             <div class="divider"></div>
 
-            <div class="tool-btn" id="export-btn" data-tooltip="Exportar JSON (Copy/Export)">
-                <!-- Icon: Clipboard with arrow UP/OUT -->
-                <svg viewBox="0 0 24 24" stroke="black">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    <path d="M12 11h4" />
-                    <path d="M12 14h4" />
-                    <path d="M8 11h1" />
-                    <path d="M8 14h1" />
-                </svg>
+            <div class="tool-btn" id="export-btn" data-tooltip="Salvar JSON (Save File)">
+                <span id="export-icon" aria-hidden="true"></span>
             </div>
 
-            <div class="tool-btn" id="import-btn" data-tooltip="Importar JSON (Paste/Import)">
-                <!-- Icon: Clipboard with arrow IN -->
+            <div class="tool-btn" id="import-btn" data-tooltip="Carregar JSON (Load File)">
                 <svg viewBox="0 0 24 24" stroke="black">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    <path d="M12 12v6" />
-                    <path d="M9 15l3 3 3-3" />
+                    <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+                    <path d="M12 10v6" />
+                    <path d="M9.5 13.5 12 16l2.5-2.5" />
                 </svg>
             </div>
+            <input type="file" id="import-file-input" accept=".json,application/json" style="display:none">
 
         </div>
 
@@ -719,14 +700,10 @@
 
             <!-- Import Modal -->
             <div id="import-modal" class="modal">
-                <h3 style="margin: 0;">Importar JSON</h3>
-                <p style="margin: 0; color: #666; font-size: 14px;">Cole o JSON abaixo. O conteúdo atual será
-                    substituído.
-                </p>
-                <textarea id="import-textarea" placeholder='[{"id": "node-1", ...}]'></textarea>
+                <h3 style="margin: 0;" id="import-modal-title">Erro ao carregar JSON</h3>
+                <p style="margin: 0; color: #666; font-size: 14px;" id="import-modal-message">Formato de arquivo inválido.</p>
                 <div class="modal-buttons">
-                    <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
-                    <button class="btn btn-primary" id="btn-confirm-import" disabled>Importar</button>
+                    <button class="btn btn-primary" onclick="closeModal()">OK</button>
                 </div>
             </div>
 
@@ -774,6 +751,7 @@
             let draggedSubtreeIds = [];
             let resizingNodeId = null;
             let viewState = { x: 0, y: 0, scale: 1 };
+            let saveMethod = 'download';
 
             // Format Painter State
             let formatPainterMode = 'IDLE'; // IDLE, SINGLE, CONTINUOUS
@@ -791,10 +769,23 @@
             const DEFAULT_TEXT = "<texto>";
             const CHILD_OFFSET_Y = 150;
             const CHILD_SPACING_X = 160;
+            const SAVE_ICON_DISK = `
+                <svg viewBox="0 0 24 24" stroke="black">
+                    <path d="M4 4h13l3 3v13H4z" />
+                    <path d="M8 4v6h8V4" />
+                    <rect x="8" y="14" width="8" height="6" rx="1" />
+                </svg>`;
+            const SAVE_ICON_DOWNLOAD = `
+                <svg viewBox="0 0 24 24" stroke="black">
+                    <path d="M12 4v10" />
+                    <path d="M8 10l4 4 4-4" />
+                    <path d="M4 18h16" />
+                </svg>`;
 
             // --- Core ---
 
             function init() {
+                configureSaveBehavior();
                 // Set initial view
                 resetViewPosition();
 
@@ -807,6 +798,88 @@
                 requestAnimationFrame(() => {
                     resetViewPosition();
                 });
+            }
+
+            function configureSaveBehavior() {
+                const exportBtn = document.getElementById('export-btn');
+                const exportIcon = document.getElementById('export-icon');
+                const hasSavePicker = typeof window.showSaveFilePicker === 'function';
+
+                saveMethod = hasSavePicker ? 'dialog' : 'download';
+                exportBtn.dataset.saveMethod = saveMethod;
+                exportBtn.setAttribute('data-tooltip', hasSavePicker ? 'Salvar JSON (Save File)' : 'Baixar JSON (Download JSON)');
+                exportIcon.innerHTML = hasSavePicker ? SAVE_ICON_DISK : SAVE_ICON_DOWNLOAD;
+            }
+
+            function getExportData() {
+                return {
+                    title: projectTitle,
+                    nodes: nodes
+                };
+            }
+
+            function buildExportFilename() {
+                const normalizedTitle = (projectTitle || 'organograma')
+                    .replace(/[^\p{L}\p{N}\s_-]+/gu, '')
+                    .trim()
+                    .replace(/\s+/g, '_');
+                return `${normalizedTitle || 'organograma'}_organomap.json`;
+            }
+
+            async function saveToFile(dataAsText) {
+                if (saveMethod === 'dialog' && typeof window.showSaveFilePicker === 'function') {
+                    try {
+                        const fileHandle = await window.showSaveFilePicker({
+                            suggestedName: buildExportFilename(),
+                            types: [{
+                                description: 'JSON',
+                                accept: { 'application/json': ['.json'] }
+                            }]
+                        });
+                        const writable = await fileHandle.createWritable();
+                        await writable.write(dataAsText);
+                        await writable.close();
+                    } catch (err) {
+                        if (err && err.name !== 'AbortError') {
+                            showAlert('Erro', 'Não foi possível salvar o arquivo.');
+                        }
+                    }
+                    return;
+                }
+
+                const blob = new Blob([dataAsText], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = buildExportFilename();
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            }
+
+            function parseImportedData(json) {
+                if (Array.isArray(json)) {
+                    return { nodes: json, title: "Organograma Importado" };
+                }
+                if (json && Array.isArray(json.nodes)) {
+                    return { nodes: json.nodes, title: json.title || "Organograma Importado" };
+                }
+                throw new Error('Formato JSON não reconhecido. Use um array de nós ou objeto com campo "nodes".');
+            }
+
+            function applyImportedData(importedNodes, importedTitle) {
+                nodes = [];
+                projectTitle = importedTitle;
+                document.getElementById('project-title').innerText = projectTitle;
+                importedNodes.forEach(n => createNode({ ...n, id: n.id, style: n.style }));
+                deselectAll();
+            }
+
+            function showImportError(message) {
+                document.getElementById('import-modal-title').innerText = 'Erro ao carregar JSON';
+                document.getElementById('import-modal-message').innerText = message;
+                showModal('import-modal');
             }
 
             function resetViewPosition() {
@@ -1482,56 +1555,40 @@
                 });
 
                 document.getElementById('export-btn').addEventListener('click', () => {
-                    const data = JSON.stringify({
-                        title: projectTitle,
-                        nodes: nodes
-                    }, null, 2);
-                    navigator.clipboard.writeText(data).then(() => {
-                        showAlert("Exportar", "Dados exportados para a área de transferência!");
-                    });
+                    const data = JSON.stringify(getExportData(), null, 2);
+                    saveToFile(data);
                 });
 
                 document.getElementById('import-btn').addEventListener('click', () => {
-                    showModal('import-modal');
-                    document.getElementById('import-textarea').value = '';
-                    document.getElementById('import-textarea').focus();
+                    document.getElementById('import-file-input').click();
                 });
 
-                // Import logic
-                const btnConfirmImport = document.getElementById('btn-confirm-import');
-                const importTextarea = document.getElementById('import-textarea');
-                importTextarea.addEventListener('input', (e) => {
-                    try {
-                        const json = JSON.parse(e.target.value);
-                        const isValid = Array.isArray(json) || (json.nodes && Array.isArray(json.nodes));
-                        btnConfirmImport.disabled = !isValid;
-                    } catch (err) {
-                        btnConfirmImport.disabled = true;
-                    }
-                });
+                const importFileInput = document.getElementById('import-file-input');
+                importFileInput.addEventListener('change', (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
 
-                btnConfirmImport.addEventListener('click', () => {
-                    try {
-                        const json = JSON.parse(importTextarea.value);
-                        let importedNodes = [];
-                        if (Array.isArray(json)) {
-                            importedNodes = json;
-                            projectTitle = "Organograma Importado";
-                        } else if (json.nodes && Array.isArray(json.nodes)) {
-                            importedNodes = json.nodes;
-                            projectTitle = json.title || "Organograma Importado";
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        try {
+                            const json = JSON.parse(String(reader.result));
+                            const parsed = parseImportedData(json);
+                            applyImportedData(parsed.nodes, parsed.title);
+                        } catch (err) {
+                            if (err instanceof SyntaxError) {
+                                showImportError('Formato JSON não reconhecido. Verifique o conteúdo do arquivo.');
+                            } else {
+                                showImportError(err.message || 'Erro ao importar JSON.');
+                            }
+                        } finally {
+                            importFileInput.value = '';
                         }
-
-                        if (importedNodes.length > 0 || Array.isArray(json)) {
-                            nodes = [];
-                            document.getElementById('project-title').innerText = projectTitle;
-                            importedNodes.forEach(n => createNode({ ...n, id: n.id, style: n.style }));
-                            closeModal();
-                            deselectAll();
-                        }
-                    } catch (e) {
-                        showAlert('Erro', 'Erro ao importar JSON.');
-                    }
+                    };
+                    reader.onerror = () => {
+                        showImportError('Não foi possível ler o arquivo selecionado.');
+                        importFileInput.value = '';
+                    };
+                    reader.readAsText(file);
                 });
 
                 // Title Sync

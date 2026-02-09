@@ -72,13 +72,12 @@ export async function resizeNodeBottomRight(page, nodeId, dx, dy) {
   await page.mouse.up({ button: 'left' });
 }
 
-export async function importDiagram(page, payload) {
-  await page.locator('#import-btn').click();
-  await expect(page.locator('#import-modal')).toHaveClass(/active/);
-  await page.locator('#import-textarea').fill(JSON.stringify(payload));
-  await expect(page.locator('#btn-confirm-import')).toBeEnabled();
-  await page.locator('#btn-confirm-import').click();
-  await expect(page.locator('#import-modal')).not.toHaveClass(/active/);
+export async function importDiagram(page, payload, filename = 'import.json') {
+  await page.locator('#import-file-input').setInputFiles({
+    name: filename,
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(payload))
+  });
 }
 
 export function byId(items) {

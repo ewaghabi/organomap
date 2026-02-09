@@ -26,6 +26,33 @@ async function setRangeInput(page, selector, value) {
 }
 
 test.describe('Organomap - regression suite', () => {
+  test('uses save dialog mode and disk icon when showSaveFilePicker is available', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.showSaveFilePicker = async () => ({
+        createWritable: async () => ({ write: async () => { }, close: async () => { } })
+      });
+    });
+    await gotoApp(page);
+
+    await expect(page.locator('#export-btn')).toHaveAttribute('data-save-method', 'dialog');
+    await expect(page.locator('#export-btn')).toHaveAttribute('data-tooltip', /Salvar JSON/);
+    await expect(page.locator('#export-icon svg')).toBeVisible();
+  });
+
+  test('uses download mode and download icon when showSaveFilePicker is unavailable', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        value: undefined
+      });
+    });
+    await gotoApp(page);
+
+    await expect(page.locator('#export-btn')).toHaveAttribute('data-save-method', 'download');
+    await expect(page.locator('#export-btn')).toHaveAttribute('data-tooltip', /Baixar JSON/);
+    await expect(page.locator('#export-icon svg')).toBeVisible();
+  });
+
   test('initializes with one root node and no connections', async ({ page }) => {
     await gotoApp(page);
 
@@ -236,10 +263,15 @@ test.describe('Organomap - regression suite', () => {
   test('validates import input and applies imported title and nodes', async ({ page }) => {
     await gotoApp(page);
 
-    await page.locator('#import-btn').click();
-    await page.locator('#import-textarea').fill('{"broken":');
-    await expect(page.locator('#btn-confirm-import')).toBeDisabled();
-    await page.locator('#import-modal .btn.btn-cancel').click();
+    await page.locator('#import-file-input').setInputFiles({
+      name: 'invalid.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from('{"broken":')
+    });
+    await expect(page.locator('#import-modal')).toHaveClass(/active/);
+    await expect(page.locator('#import-modal-message')).toContainText('Formato JSON não reconhecido');
+    await page.locator('#import-modal .btn.btn-primary').click();
+    await expect(page.locator('#import-modal')).not.toHaveClass(/active/);
 
     await importDiagram(page, {
       title: 'Mapa Importado',
@@ -293,29 +325,35 @@ test.describe('Organomap - regression suite', () => {
     await expect(page.locator('#header-toggle')).not.toBeChecked();
   });
 
-  test('exports to clipboard and shows success feedback', async ({ page }) => {
+  test('exports to json file using save dialog mode', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__saved = { method: null, filename: null, text: null };
+      window.showSaveFilePicker = async ({ suggestedName }) => ({
+        createWritable: async () => ({
+          write: async (text) => {
+            window.__saved = { method: 'dialog', filename: suggestedName, text };
+          },
+          close: async () => { }
+        })
+      });
+    });
+
     await gotoApp(page);
     await page.locator('#header-toggle-btn').click();
     expect((await getModel(page)).nodes[0].showHeader).toBe(false);
 
-    await page.evaluate(() => {
-      window.__copied = null;
-      Object.defineProperty(navigator, 'clipboard', {
-        configurable: true,
-        value: {
-          writeText: async (text) => {
-            window.__copied = text;
-          }
-        }
-      });
-    });
+    await page.locator('#project-title').click();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type('Meu Mapa');
+    await page.locator('#canvas-container').click({ position: { x: 120, y: 140 } });
 
     await page.locator('#export-btn').click();
-    await expect(page.locator('#alert-modal')).toHaveClass(/active/);
-    await expect(page.locator('#alert-message')).toContainText('área de transferência');
 
-    const copied = await page.evaluate(() => window.__copied);
-    const parsed = JSON.parse(copied);
+    const saved = await page.evaluate(() => window.__saved);
+    expect(saved.method).toBe('dialog');
+    expect(saved.filename).toBe('Meu_Mapa_organomap.json');
+
+    const parsed = JSON.parse(saved.text);
     expect(parsed).toHaveProperty('title');
     expect(Array.isArray(parsed.nodes)).toBe(true);
     expect(parsed.nodes.length).toBeGreaterThan(0);
