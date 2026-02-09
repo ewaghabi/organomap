@@ -253,6 +253,7 @@ test.describe('Organomap - regression suite', () => {
     await setColorInput(page, '#text-color-picker', '#2222aa');
     await setRangeInput(page, '#border-width-slider', 5);
     await setRangeInput(page, '#font-size-slider', 24);
+    await resizeNodeBottomRight(page, rootId, 120, 80);
 
     await page.locator('#format-painter-btn').click();
     await page.waitForTimeout(300);
@@ -260,6 +261,8 @@ test.describe('Organomap - regression suite', () => {
 
     const model = byId((await getModel(page)).nodes);
     expect(model[childId].style).toEqual(model[rootId].style);
+    expect(model[childId].width).toBe(model[rootId].width);
+    expect(model[childId].height).toBe(model[rootId].height);
     await expect(page.locator('body')).not.toHaveClass(/format-painter-mode/);
   });
 
@@ -286,6 +289,17 @@ test.describe('Organomap - regression suite', () => {
     // Click below the fixed header to hit the actual canvas background.
     const canvasBox = await page.locator('#canvas-container').boundingBox();
     await page.mouse.click(canvasBox.x + 120, canvasBox.y + 140, { button: 'right' });
+    await expect(page.locator('body')).not.toHaveClass(/format-painter-mode/);
+  });
+
+  test('toggles off format painter when clicking the button again in continuous mode', async ({ page }) => {
+    await gotoApp(page);
+    const rootId = (await getModel(page)).nodes[0].id;
+    await page.locator(`#${rootId}`).click();
+    await page.locator('#format-painter-btn').dblclick();
+    await expect(page.locator('body')).toHaveClass(/format-painter-mode/);
+
+    await page.locator('#format-painter-btn').click();
     await expect(page.locator('body')).not.toHaveClass(/format-painter-mode/);
   });
 
@@ -389,15 +403,26 @@ test.describe('Organomap - regression suite', () => {
     expect(parsed.nodes[0].showHeader).toBe(false);
   });
 
-  test('updates view transform for zoom, pan and reset actions', async ({ page }) => {
+  test('updates view transform for zoom around mouse pointer, pan and reset actions', async ({ page }) => {
     await gotoApp(page);
-    const initial = await getViewState(page);
-
-    await page.locator('#zoom-controls .zoom-btn').first().click();
-    const afterZoomIn = await getViewState(page);
-    expect(afterZoomIn.scale).toBeGreaterThan(initial.scale);
-
     const canvasBox = await page.locator('#canvas-container').boundingBox();
+    const pivotX = canvasBox.x + canvasBox.width * 0.32;
+    const pivotY = canvasBox.y + canvasBox.height * 0.38;
+
+    const beforeWheel = await getViewState(page);
+    const worldBeforeX = (pivotX - beforeWheel.x) / beforeWheel.scale;
+    const worldBeforeY = (pivotY - beforeWheel.y) / beforeWheel.scale;
+
+    await page.mouse.move(pivotX, pivotY);
+    await page.mouse.wheel(0, -120);
+
+    const afterWheel = await getViewState(page);
+    expect(afterWheel.scale).toBeGreaterThan(beforeWheel.scale);
+    const worldAfterX = (pivotX - afterWheel.x) / afterWheel.scale;
+    const worldAfterY = (pivotY - afterWheel.y) / afterWheel.scale;
+    expect(Math.abs(worldAfterX - worldBeforeX)).toBeLessThan(0.5);
+    expect(Math.abs(worldAfterY - worldBeforeY)).toBeLessThan(0.5);
+
     const startX = canvasBox.x + canvasBox.width * 0.7;
     const startY = canvasBox.y + canvasBox.height * 0.7;
     await page.mouse.move(startX, startY);
@@ -405,8 +430,8 @@ test.describe('Organomap - regression suite', () => {
     await page.mouse.move(startX + 80, startY + 60);
     await page.mouse.up({ button: 'right' });
     const afterPan = await getViewState(page);
-    expect(afterPan.x).not.toBe(afterZoomIn.x);
-    expect(afterPan.y).not.toBe(afterZoomIn.y);
+    expect(afterPan.x).not.toBe(afterWheel.x);
+    expect(afterPan.y).not.toBe(afterWheel.y);
 
     await page.locator('#reset-view-btn').click();
     const afterResetView = await getViewState(page);

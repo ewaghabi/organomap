@@ -246,7 +246,7 @@
         /* Format Painter Custom Cursor */
         body.format-painter-mode #canvas-container,
         body.format-painter-mode .node {
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 22H4a2 2 0 0 1-2-2V6"/><path d="M10 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8"/><rect x="10" y="2" width="12" height="12" rx="2"/></svg>') 0 24, crosshair !important;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none"><g stroke="black" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4.8h14.2a2 2 0 0 1 2 2V9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6.8a2 2 0 0 1 2-2Z"/><path d="M22.2 6.2h2.2v3.4h-2.2"/><path d="M24.4 9.6v2.4l-6.8 3.6v2.2"/><path d="M14.2 17.8a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6v7.2a1.6 1.6 0 0 1-1.6 1.6h-2.4a1.6 1.6 0 0 1-1.6-1.6Z"/><path d="M16.0 18.9h2.0v5.0h-2.0Z"/></g></svg>') 0 24, crosshair !important;
         }
 
         #world {
@@ -685,9 +685,9 @@
                 <div id="nodes-layer"></div>
             </div>
             <div id="zoom-controls">
-                <button class="zoom-btn" onclick="zoom(0.1)">+</button>
+                <button class="zoom-btn" onclick="zoom(1.1)">+</button>
                 <button class="zoom-btn" onclick="resetZoom()">100%</button>
-                <button class="zoom-btn" onclick="zoom(-0.1)">-</button>
+                <button class="zoom-btn" onclick="zoom(1 / 1.1)">-</button>
             </div>
         </div>
 
@@ -1199,9 +1199,26 @@
 
             // --- Interaction Logic ---
 
-            function zoom(delta) {
-                viewState.scale += delta;
-                if (viewState.scale < 0.1) viewState.scale = 0.1;
+            function zoom(scaleFactor, clientX = null, clientY = null) {
+                const oldScale = viewState.scale;
+                let newScale = oldScale * scaleFactor;
+                if (newScale < 0.1) newScale = 0.1;
+                if (newScale === oldScale) return;
+
+                let pivotX = clientX;
+                let pivotY = clientY;
+                if (pivotX === null || pivotY === null) {
+                    const rect = canvasContainer.getBoundingClientRect();
+                    pivotX = rect.left + rect.width / 2;
+                    pivotY = rect.top + rect.height / 2;
+                }
+
+                const worldX = (pivotX - viewState.x) / oldScale;
+                const worldY = (pivotY - viewState.y) / oldScale;
+
+                viewState.scale = newScale;
+                viewState.x = pivotX - worldX * newScale;
+                viewState.y = pivotY - worldY * newScale;
                 updateWorldTransform();
             }
 
@@ -1357,13 +1374,11 @@
                 }
 
                 const node = nodes.find(n => n.id === selectedNodeId);
-                formatSourceStyle = { ...node.style };
-
-                // Logic for single vs double click handled by caller or state?
-                // Caller: onclick vs ondblclick.
-                // If single click, set mode SINGLE.
-                // If double, set mode CONTINUOUS.
-                // But we need to distinguish.
+                formatSourceStyle = {
+                    style: { ...node.style },
+                    width: node.width,
+                    height: node.height
+                };
             }
 
             function setFormatPainterMode(mode) {
@@ -1381,7 +1396,18 @@
             function handleFormatPainterApply(targetNode) {
                 if (!formatSourceStyle) return;
 
-                updateNodeStyle(targetNode.id, formatSourceStyle);
+                updateNodeStyle(targetNode.id, formatSourceStyle.style);
+                const node = nodes.find(n => n.id === targetNode.id);
+                if (node) {
+                    node.width = formatSourceStyle.width;
+                    node.height = formatSourceStyle.height;
+                    const el = document.getElementById(node.id);
+                    if (el) {
+                        el.style.width = node.width + 'px';
+                        el.style.height = node.height + 'px';
+                    }
+                    updateConnections();
+                }
 
                 if (formatPainterMode === 'SINGLE') {
                     setFormatPainterMode('IDLE');
@@ -1394,7 +1420,8 @@
             function setupEventListeners() {
                 canvasContainer.addEventListener('wheel', (e) => {
                     e.preventDefault();
-                    zoom(e.deltaY > 0 ? -0.1 : 0.1);
+                    const wheelFactor = Math.exp(-e.deltaY * 0.0015);
+                    zoom(wheelFactor, e.clientX, e.clientY);
                 });
 
                 canvasContainer.addEventListener('mousedown', (e) => {
@@ -1524,6 +1551,15 @@
                 // Detect single vs double click
                 let clickTimer = null;
                 fpBtn.addEventListener('click', (e) => {
+                    if (formatPainterMode === 'CONTINUOUS') {
+                        if (clickTimer) {
+                            clearTimeout(clickTimer);
+                            clickTimer = null;
+                        }
+                        setFormatPainterMode('IDLE');
+                        return;
+                    }
+
                     if (clickTimer) {
                         clearTimeout(clickTimer);
                         clickTimer = null;
